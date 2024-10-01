@@ -1,0 +1,27 @@
+add_executable(polyhedron_prog_simple polyhedron_prog_simple.cpp)
+target_link_libraries(polyhedron_prog_simple CGAL::CGAL)
+target_link_libraries(polyhedron_prog_simple CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_tetra polyhedron_prog_tetra.cpp)
+target_link_libraries(polyhedron_prog_tetra CGAL::CGAL)
+target_link_libraries(polyhedron_prog_tetra CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_planes polyhedron_prog_planes.cpp)
+target_link_libraries(polyhedron_prog_planes CGAL::CGAL)
+target_link_libraries(polyhedron_prog_planes CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_vector polyhedron_prog_vector.cpp)
+target_link_libraries(polyhedron_prog_vector CGAL::CGAL)
+target_link_libraries(polyhedron_prog_vector CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_off polyhedron_prog_off.cpp)
+target_link_libraries(polyhedron_prog_off CGAL::CGAL)
+target_link_libraries(polyhedron_prog_off CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_cube polyhedron_prog_cube.cpp)
+target_link_libraries(polyhedron_prog_cube CGAL::CGAL)
+target_link_libraries(polyhedron_prog_cube CGAL::CGAL_Basic_viewer)
+
+add_executable(polyhedron_prog_color polyhedron_prog_color.cpp)
+target_link_libraries(polyhedron_prog_color CGAL::CGAL)
+target_link_libraries(polyhedron_prog_color CGAL::CGAL_Basic_viewer)

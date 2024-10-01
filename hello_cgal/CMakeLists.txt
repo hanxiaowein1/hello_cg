@@ -11,9 +11,10 @@ project(cgal_demo)
 find_package(CGAL REQUIRED OPTIONAL_COMPONENTS Qt5)
 
 # add_subdirectory(stl_examples)
-
 add_subdirectory(HalfedgeDS_examples)
 
 add_subdirectory(hello_world)
 
 add_subdirectory(surface_mesh)
+
+add_subdirectory(polyhedron)
