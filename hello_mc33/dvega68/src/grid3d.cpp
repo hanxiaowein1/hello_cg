@@ -21,11 +21,19 @@
 
 #include "../include/MC33.h"
 
+/**
+ * @brief libigl
+ * 
+ */
+#ifndef NOMINMAX
+#define NOMINMAX
+#endif
+#include "igl/readOFF.h"
+#include "igl/signed_distance.h"
+
 #ifndef M_PI
 #define M_PI 3.14159265358979323846
 #endif
-
-using namespace std;
 
 #ifndef GRD_orthogonal
 void setIdentMat3x3d(double (*A)[3]) {
@@ -452,7 +460,7 @@ int grid3d::add_subgrid(unsigned int Oi, unsigned int Oj, unsigned int Ok,
 	if (Oi + Si*(Ni - 1) > N[0] || Oj + Sj*(Nj - 1) > N[1] || Ok + Sk*(Nk - 1) > N[2])
 		return -1;
 	if (nsg == maxnsg) {
-			grid3d **t = new (nothrow) grid3d*[maxnsg + 8];
+			grid3d **t = new (std::nothrow) grid3d*[maxnsg + 8];
 			if (!t)
 				return -2;
 			if (subgrid) {
@@ -462,7 +470,7 @@ int grid3d::add_subgrid(unsigned int Oi, unsigned int Oj, unsigned int Ok,
 		subgrid = t;
 		maxnsg += 8;
 	}
-	grid3d *G = new (nothrow) grid3d();
+	grid3d *G = new (std::nothrow) grid3d();
 	if (!G)
 		return -2;
 
@@ -547,15 +555,15 @@ int grid3d::generate_grid_from_fn(double xi, double yi, double zi, double xf, do
 		return -1;
 	}
 	if (xi > xf)
-		swap(xi, xf);
+		std::swap(xi, xf);
 	if (xf - xi < dx)
 		dx = xf - xi;
 	if (yi > yf)
-		swap(yi, yf);
+		std::swap(yi, yf);
 	if (yf - yi < dy)
 		dy = yf - yi;
 	if (zi > zf)
-		swap(zi, zf);
+		std::swap(zi, zf);
 	if (zf - zi < dz)
 		dz = zf - zi;
 	N[0] = int((xf - xi)/dx + 0.5);
@@ -609,7 +617,7 @@ int grid3d::read_grd(const char *filename) {
 	int xi[3], order;
 
 	free_F();
-	ifstream in(filename);
+	std::ifstream in(filename);
 	if (!in)
 		return -1;
 	nonortho = 0;
@@ -644,14 +652,14 @@ int grid3d::read_grd(const char *filename) {
 				for (i = 0; i <= N[0]; ++i)
 				{
 					in.getline(cs, 31);
-					(*F)[k][j][i] = stof(cs);
+					(*F)[k][j][i] = std::stof(cs);
 				}
 		} else {
 			for (i = 0; i <= N[0]; ++i)
 				for (j = 0; j <= N[1]; ++j)
 				{
 					in.getline(cs, 31);
-					(*F)[k][j][i] = stof(cs);
+					(*F)[k][j][i] = std::stof(cs);
 				}
 		}
 	return (in.good()? 0: -4);
@@ -663,7 +671,7 @@ internal binary format
 int grid3d::read_grd_binary(const char* filename) {
 	unsigned int i;
 	free_F();
-	ifstream in(filename, ios::binary);
+	std::ifstream in(filename, std::ios::binary);
 	if (!in)
 		return -1;
 	in.read(reinterpret_cast<char*>(&i), sizeof(int));
@@ -722,8 +730,8 @@ the fuction read all files with end number greater or equal to filename.
 (Some datasets: http://www.graphics.stanford.edu/data/voldata/voldata.html)
 */
 int grid3d::read_scanfiles(const char *filename, unsigned int res, int order) {
-	string nm(filename);
-	ifstream in;
+	std::string nm(filename);
+	std::ifstream in;
 	unsigned int i, j, l;
 	int m, k = -1;
 	unsigned short int n;
@@ -744,8 +752,8 @@ int grid3d::read_scanfiles(const char *filename, unsigned int res, int order) {
 		l--;
 	m = stoi(nm.substr(++l));
 	while (1) {
-		nm.replace(l,6,to_string(m++));
-		in.open(nm, ios::binary|ifstream::in);
+		nm.replace(l,6,std::to_string(m++));
+		in.open(nm, std::ios::binary|std::ifstream::in);
 		if (!in) {
 			m = 0;
 			break;
@@ -859,7 +867,7 @@ abs(byte)*n[0]*n[1]*n[2]. The function returns zero when succeeds.
 int grid3d::read_raw_file(const char *filename, unsigned int *n, int byte, int isfloat) {
 	unsigned int i, j, k;
 	free_F();
-	ifstream in(filename, ios::binary);
+	std::ifstream in(filename, std::ios::binary);
 	if (!in)
 		return -1;
 	unsigned int ui = 0;
@@ -945,6 +953,75 @@ int grid3d::read_raw_file(const char *filename, unsigned int *n, int byte, int i
 	return (in.good()? 0: -4);
 }
 
+int grid3d::init_with_bunny(std::string off_path, int nx, int ny, int nz)
+{
+	free_F();
+#ifndef GRD_orthogonal
+	nonortho = 0;
+#endif
+	periodic = 0;
+	r0[0] = r0[1] = r0[2] = 0.0;
+	for (int h = 0; h != 3; ++h)
+		d[h] = 1.0;
+	this->N[0] = nx - 1;
+	this->N[1] = ny - 1;
+	this->N[2] = nz - 1;
+	for (int h = 0; h != 3; ++h)
+		L[h] = float(N[h]);
+	if (alloc_F()) {
+		free_F();
+		return -2;
+	}
+
+	Eigen::MatrixXd V;
+    Eigen::MatrixXi F;
+    igl::readOFF(off_path, V, F);
+	Eigen::Vector3d m = V.colwise().minCoeff();
+    Eigen::Vector3d M = V.colwise().maxCoeff();
+    Eigen::MatrixXd P;
+	P.resize(nx * ny * nz, 3);
+	for(unsigned int k = 0; k < nz; k++)
+	{
+		double z_axis = m.z() + double(k) * (M.z() - m.z()) / double(nz - 1);
+		for(unsigned int j = 0; j < ny; j++)
+		{
+			double y_axis = m.y() + double(j) * (M.y() - m.y()) / double(ny - 1);
+			for(unsigned int i = 0; i < nx; i++)
+			{
+				double x_axis = m.x() + double(i) * (M.x() - m.x()) / double(nx - 1);
+				unsigned int count = k * ny * nx + j * nx + i;
+				P(count, 0) = x_axis;
+				P(count, 1) = y_axis;
+				P(count, 2) = z_axis;
+			}
+		}
+	}
+	Eigen::VectorXi I;
+    Eigen::MatrixXd N,C;
+    Eigen::VectorXd S;
+    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
+    igl::signed_distance(P, V, F, type, S, I, C, N);
+
+	// init this->F by S
+	for(unsigned int k = 0; k < nz; k++)
+	{
+		for(unsigned int j = 0; j < ny; j++)
+		{
+			for(unsigned int i = 0; i < nx; i++)
+			{
+				unsigned int count = k * ny * nx + j * nx + i;
+				(*(this->F))[k][j][i] = S[count];
+			}
+		}
+	}
+
+#ifndef GRD_orthogonal
+	setIdentMat3x3d(_A);
+	setIdentMat3x3d(A_);
+#endif
+	return 0;
+}
+
 int grid3d::set_sphere(int nx, int ny, int nz, float radius)
 {
 	free_F();
@@ -994,7 +1071,7 @@ http://www.cg.tuwien.ac.at/research/vis/datasets/
 int grid3d::read_dat_file(const char *filename) {
 	unsigned short int n, nx, ny, nz;
 	free_F();
-	ifstream in(filename, ios::binary);
+	std::ifstream in(filename, std::ios::binary);
 	if (!in)
 		return -1;
 #ifndef GRD_orthogonal
@@ -1061,7 +1138,7 @@ Save all point values of the grid in binary format
 int grid3d::save_raw_file(const char *filename) {
 	if (!F)
 		return -1;
-	ofstream out(filename, ios::binary);
+	std::ofstream out(filename, std::ios::binary);
 	if (!out)
 		return -1;
 	for (unsigned int k = 0; k <= N[2]; ++k)

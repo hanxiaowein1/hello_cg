@@ -44,10 +44,8 @@ inline float invSqrt(float f) {
 }
 #endif
 
-using namespace std;
-
 MC33::MC33() : F(0), table
-#include "MC33_LookUpTable.h"
+#include "mc33_lookup_table.h"
 {}
 
 MC33::~MC33() {
@@ -1555,7 +1553,7 @@ int MC33::calculate_isosurface(surface &Sf, MC33_real iso) {
 		std::swap(this->Dy, this->Uy);
 	}
 	try {
-		Sf.color = vector<int>(Sf.nV, DefaultColor);
+		Sf.color = std::vector<int>(Sf.nV, DefaultColor);
 	}
 	catch (...) {
 		memoryfault = 1;
@@ -1607,7 +1605,7 @@ size_t MC33::size_of_isosurface(MC33_real iso, unsigned int &nV, unsigned int &n
 			if (signbf(v2[1])) i |= 4;
 			if (signbf(v2[0])) i |= 8;
 			for (unsigned int x = 0; x != Nx; ++x) {
-				swap(v, v2);
+				std::swap(v, v2);
 				// V00 += d;
 				// v2[0] = iso - *V00;//*(++V00);
 				v2[0] = iso - V00[x + 1];

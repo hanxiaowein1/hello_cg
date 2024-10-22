@@ -232,6 +232,8 @@ public:
 
 	int set_sphere(int nx, int ny, int nz, float radius);
 
+	int init_with_bunny(std::string off_path, int nx, int ny, int nz);
+
 	/******************************************************************
 	save the grid points values in a raw data file of MC33_real (float or double). The
 	function returns 0 when succeeds.*/

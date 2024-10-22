@@ -19,3 +19,4 @@ include_directories("D:\\Library\\libigl\\build\\_deps\\glfw-src\\include")
 include_directories("D:\\Library\\libigl\\build\\_deps\\glad-src\\include")
 
 add_subdirectory(hello_world)
+add_subdirectory(signed_distance)

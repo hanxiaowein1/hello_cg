@@ -1,5 +1,5 @@
 #include <iostream>
-#include "MC33.cpp"
+#include "mc33.cpp"
 #include "grid3d.cpp"
 #include "surface.cpp"
 #include "../include/chaos.h"
@@ -9,7 +9,7 @@ int show(grid3d &o_grid3d, MC33 &o_mc33, surface &o_surface);
 int main()
 {
 	grid3d o_grid3d;
-	 o_grid3d.read_dat_file("D:\\PHD\\Data\\dataset-present-492x492x442\\present492x492x442.dat");
+	o_grid3d.read_dat_file("D:\\PHD\\Data\\dataset-present-492x492x442\\present492x492x442.dat");
 	//o_grid3d.set_sphere(3, 3, 3, 0.8f);
 
 	MC33 o_mc33;

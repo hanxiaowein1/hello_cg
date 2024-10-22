@@ -26,8 +26,6 @@ void printProgress(double percentage) {
 
 #include "../include/MC33.h"
 
-using namespace std;
-
 void surface::save_as_obj(std::string filename)
 {
 	std::ofstream file(filename);
@@ -42,6 +40,7 @@ void surface::save_as_obj(std::string filename)
 		printProgress(double(i) / nV);
 		file << "v " << this->V[i].v[0] << " " << this->V[i].v[1] << " " << this->V[i].v[2] << std::endl;
 	}
+	std::cout << std::endl;
 	// for(auto vertex_iterator = this->V.begin(); vertex_iterator != this->V.end(); vertex_iterator++)
 	// {
 	// 	int index = std::distance(this->V.begin(), vertex_iterator);
@@ -57,6 +56,7 @@ void surface::save_as_obj(std::string filename)
 		printProgress(double(i) / nT);
 		file << "f " << this->T[i].v[0] + 1 << " " << this->T[i].v[1] + 1 << " " << this->T[i].v[2] + 1 << std::endl;
 	}
+	std::cout << std::endl;
 	// for(auto triangle_iterator = this->T.begin(); triangle_iterator != this->T.end(); triangle_iterator++)
 	// {
 	// 	int index = std::distance(this->T.begin(), triangle_iterator);
@@ -121,7 +121,7 @@ void surface::flipNormals() {
 
 void surface::flipTriangles() {
 	for (auto &t : T)
-		swap(t.v[0], t.v[1]);
+		std::swap(t.v[0], t.v[1]);
 }
 
 void surface::setColor(unsigned int n, unsigned char *pcolor) {
@@ -145,7 +145,7 @@ const unsigned char* surface::getColor(unsigned int n) {
 #endif
 
 int surface::save_bin(const char *filename) {
-	ofstream out(filename, ios::binary);
+	std::ofstream out(filename, std::ios::binary);
 	if (!out)
 		return -1;
 
@@ -163,7 +163,7 @@ int surface::save_bin(const char *filename) {
 }
 
 int surface::read_bin(const char *filename) {
-	ifstream in(filename, ios::binary);
+	std::ifstream in(filename, std::ios::binary);
 	if (!in)
 		return -1;
 	int n;
@@ -205,32 +205,32 @@ int surface::read_bin(const char *filename) {
 #define MC33_prec 6
 #endif
 int surface::save_txt(const char* filename) {
-	ofstream out(filename);
+	std::ofstream out(filename);
 	adjustvectorlenght();
 	if (!out)
 		return -1;
 
 	out << "isovalue: ";
-	out.setf(ios_base::scientific, ios_base::floatfield);
+	out.setf(std::ios_base::scientific, std::ios_base::floatfield);
 	out.precision(MC33_prec);
 	out << iso << "\n\nVERTICES:\n" << nV << "\n\n";
-	out.setf(ios_base::fixed, ios_base::basefield);
+	out.setf(std::ios_base::fixed, std::ios_base::basefield);
 	out.precision(MC33_prec);
 	for (const auto &r: V)
-		out << setw(7 + MC33_prec) << r.v[0] << setw(8 + MC33_prec) << r.v[1] << setw(8 + MC33_prec) << r.v[2] << endl;
+		out << std::setw(7 + MC33_prec) << r.v[0] << std::setw(8 + MC33_prec) << r.v[1] << std::setw(8 + MC33_prec) << r.v[2] << std::endl;
 
 	out << "\n\nTRIANGLES:\n" << nT << "\n\n";
 	for (const auto &t: T)
-		out << setw(8) << t.v[0] << " " << setw(8) << t.v[1] << " "  << setw(8) << t.v[2] << endl;
+		out << std::setw(8) << t.v[0] << " " << std::setw(8) << t.v[1] << " "  << std::setw(8) << t.v[2] << std::endl;
 
 	out << "\n\nNORMALS:\n";
 	out.precision(5);
 	for (const auto &r: N)
-		out << setw(12) << r.v[0] << setw(13) << r.v[1] << setw(13) << r.v[2] << endl;
+		out << std::setw(12) << r.v[0] << std::setw(13) << r.v[1] << std::setw(13) << r.v[2] << std::endl;
 
 	out << "\n\nCOLORS:\n";
 	for (const auto &c: color)
-		out << c << endl;
+		out << c << std::endl;
 	out << "\nEND\n";
 	return (out.good()? 0: -1);
 }
