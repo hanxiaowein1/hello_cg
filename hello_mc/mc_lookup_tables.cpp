@@ -3,6 +3,7 @@
 // key: v8v7v6v5v4v3v2v1v0(0 is negative, 1 is positive, remember: bitset stores reversely)
 std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_Tables = {
     {0b11111111, {}},
+    {0b00000000, {}},
 
     /**
      * @brief case 1
@@ -24,7 +25,7 @@ std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_Tables = 
     {0b11111100, {0x381, 0x189}},
     {0b11111001, {0x2A0, 0x09A}},
     {0b11110011, {0x3BA, 0x13A}},
-    {0b11100111, {0x2B0, 0xB80}},
+    {0b11110110, {0x2B0, 0xB80}},
     {0b11001111, {0x785, 0x589}},
     {0b10011111, {0x6A9, 0x649}},
     {0b00111111, {0x5AB, 0x5B7}},

@@ -71,40 +71,7 @@ TEST(GlobalTest, CubeSignedDistance)
          2.5f, 2.5f, 0.5f,
          2.5f, 2.5f, 2.5f,
          2.5f, 0.5f, 2.5f;
-    for(int i = 0; i < V.rows(); i++)
-    {
-        for(int j = 0; j < V.cols(); j++)
-        {
-            V(i, j) = (V(i, j) - 1.5f) / 1.5f;
-        }
-    }
-    Eigen::MatrixXi F(12, 3);
-    std::cout << F.rows() << std::endl;
-    F << 0, 1, 3,
-         1, 2, 3,
-         2, 6, 7,
-         2, 3, 7,
-         5, 6, 7,
-         4, 5, 7,
-         1, 4, 5,
-         0, 1, 4,
-         1, 2, 5,
-         2, 5, 6,
-         0, 7, 3,
-         0, 4, 7;
-    //// Plot the mesh
-    //igl::opengl::glfw::Viewer viewer;
-    //viewer.data().set_mesh(V, F);
-    //viewer.launch();
-    write_obj("manually_build_cubic.obj", V, F);
-    if (igl::is_vertex_manifold(F))
-    {
-        std::cout << "F is manifold" << std::endl;
-    }
-    else
-    {
-        std::cout << "F is not manifold" << std::endl;
-    }
+
     int nx = 4, ny = 4, nz = 4;
     Eigen::MatrixXd P;
     P.resize(nx * ny * nz, 3);
@@ -115,51 +82,35 @@ TEST(GlobalTest, CubeSignedDistance)
             for(int i = 0; i < nx; i++)
             {
 				unsigned int count = k * ny * nx + j * nx + i;
-                P(count, 0) = -1.0f + i * 2.0f / (double(nx) - 1.0f);
-                P(count, 1) = -1.0f + j * 2.0f / (double(ny) - 1.0f);
-                P(count, 2) = -1.0f + k * 2.0f / (double(nz) - 1.0f);
+                P(count, 0) = i;
+                P(count, 1) = j;
+                P(count, 2) = k;
             }
         }
     }
-    std::cout << "--------------P-------------" << std::endl;
-    std::cout << P << std::endl;
-    //auto p_first_row = P.row(0);
-    //std::cout << "p_first_row: \n" << p_first_row << std::endl;
-    Eigen::VectorXi I;
-    Eigen::MatrixXd N,C;
-    Eigen::VectorXd S;
-    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
-    igl::signed_distance(P, V, F, type, S, I, C, N);
+    std::vector<double> S{
+        0.866025f, 0.707107f, 0.707107f, 0.866025f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.866025f, 0.707107f, 0.707107f, 0.866025f,
+
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.5f, -0.5f, -0.5f, 0.5f,
+        0.5f, -0.5f, -0.5f, 0.5f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.5f, -0.5f, -0.5f, 0.5f,
+        0.5f, -0.5f, -0.5f, 0.5f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+
+        0.866025f, 0.707107f, 0.707107f, 0.866025f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.707107f, 0.5f, 0.5f, 0.707107f,
+        0.866025f, 0.707107f, 0.707107f, 0.866025f,
+    };
     std::vector<Eigen::Vector3d> vertices;
     std::vector<Eigen::Vector3i> triangles;
-
-    std::cout << "------------------C---------------------" << std::endl;
-    std::cout << C << std::endl;
-    std::cout << "------------------I---------------------" << std::endl;
-    std::cout << I << std::endl;
-    // for (int i = 0; i < P.rows(); i++)
-    // {
-    //     if (i == 10)
-    //     {
-    //         std::cout << "I got you" << std::endl;
-    //     }
-    //     auto row = P.row(i);
-    //     Eigen::RowVector3d point(row(0), row(1), row(2));
-    //     if (inside_manifold_mesh(V, F, point))
-    //     {
-    //         S[i] = -1.0f * std::abs(S[i]);
-    //     }
-    //     else
-    //     {
-    //         S[i] = std::abs(S[i]);
-    //     }
-    // }
-    /*
-    * 1. use outside and inside function to deside symbol, inside also failed in some point, so it still not work
-    * 2. normalize to (-1, 1), still has symbol question in some points
-    */
-    std::cout << "------------------S---------------------" << std::endl;
-    std::cout << S << std::endl;
     int iso_value = 0;
     for(int k = 0; k < nz - 1; k++)
 	{
