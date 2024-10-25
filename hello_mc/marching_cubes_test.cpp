@@ -1,3 +1,6 @@
+#include <fstream>
+#include <stdexcept>
+#include <format>
 #include "gtest/gtest.h"
 #include "mc_lookup_tables.h"
 #include "marching_cubes.h"
@@ -7,6 +10,7 @@
 #include "igl/signed_distance.h"
 #include "igl/opengl/glfw/Viewer.h"
 #include "igl/copyleft/cgal/points_inside_component.h"
+#include "igl/is_vertex_manifold.h"
 
 class GlobalTest
 {
@@ -15,33 +19,46 @@ class GlobalTest
     void TearDown() {};
 };
 
-bool is_edge_manifold(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F)
+void write_obj(std::string filename, const Eigen::MatrixXd& V, const Eigen::MatrixXi& F)
 {
-    bool isEdgeManifold = false;
-    for (int i = 0; i < F.rows(); ++i) {
-        for (int j = 0; j < 3; ++j) {
-            int v1 = F(i, j);
-            int v2 = F(i, (j + 1) % 3);
-            int edgeCount = 0;
-            for (int k = 0; k < F.rows(); ++k) {
-                for (int l = 0; l < 3; ++l) {
-                    int v3 = F(k, l);
-                    int v4 = F(k, (l + 1) % 3);
-                    if ((v1 == v3 && v2 == v4) || (v1 == v4 && v2 == v3)) {
-                        edgeCount++;
-                        break;
-                    }
-                }
-            }
-            if (edgeCount != 2) {
-                isEdgeManifold = false;
-                break;
-            }
-        }
-        if (!isEdgeManifold) break;
+    std::ofstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error opening file for writing: " << filename << std::endl;
+        return;
     }
-    return isEdgeManifold;
+    for(int i = 0; i < V.rows(); i++)
+    {
+        auto row = V.row(i);
+        if(row.size() != 3)
+        {
+            throw std::invalid_argument(std::format("vertices col size is not equal to 3 at row {}", i));
+        }
+        file << "v " << row(0) << " " << row(1) << " " << row(2) << std::endl;
+    }
+    for(int i = 0; i < F.rows(); i++)
+    {
+        auto row = F.row(i);
+        if(row.size() != 3)
+        {
+            throw std::invalid_argument(std::format("triangles col size is not equal to 3 at row {}", i));
+        }
+        file << "f " << row(0) + 1 << " " << row(1) + 1 << " " << row(2) + 1 << std::endl;
+    }
+	file.close();
 }
+
+bool inside_manifold_mesh(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, const Eigen::RowVector3d& point)
+{
+    Eigen::VectorXi inside;
+    igl::copyleft::cgal::points_inside_component(V, F, point, inside);
+    if (inside(0) == 1) {
+        return true;
+    }
+    else {
+        return false;
+    }
+}
+
 
 TEST(GlobalTest, CubeSignedDistance)
 {
@@ -54,7 +71,15 @@ TEST(GlobalTest, CubeSignedDistance)
          2.5f, 2.5f, 0.5f,
          2.5f, 2.5f, 2.5f,
          2.5f, 0.5f, 2.5f;
+    for(int i = 0; i < V.rows(); i++)
+    {
+        for(int j = 0; j < V.cols(); j++)
+        {
+            V(i, j) = (V(i, j) - 1.5f) / 1.5f;
+        }
+    }
     Eigen::MatrixXi F(12, 3);
+    std::cout << F.rows() << std::endl;
     F << 0, 1, 3,
          1, 2, 3,
          2, 6, 7,
@@ -71,13 +96,14 @@ TEST(GlobalTest, CubeSignedDistance)
     //igl::opengl::glfw::Viewer viewer;
     //viewer.data().set_mesh(V, F);
     //viewer.launch();
-    if (is_edge_manifold(V, F))
+    write_obj("manually_build_cubic.obj", V, F);
+    if (igl::is_vertex_manifold(F))
     {
-        std::cout << "mesh is edge manifold" << std::endl;
+        std::cout << "F is manifold" << std::endl;
     }
     else
     {
-        std::cout << "mesh is not edge manifold" << std::endl;
+        std::cout << "F is not manifold" << std::endl;
     }
     int nx = 4, ny = 4, nz = 4;
     Eigen::MatrixXd P;
@@ -89,9 +115,9 @@ TEST(GlobalTest, CubeSignedDistance)
             for(int i = 0; i < nx; i++)
             {
 				unsigned int count = k * ny * nx + j * nx + i;
-                P(count, 0) = i;
-                P(count, 1) = j;
-                P(count, 2) = k;
+                P(count, 0) = -1.0f + i * 2.0f / (double(nx) - 1.0f);
+                P(count, 1) = -1.0f + j * 2.0f / (double(ny) - 1.0f);
+                P(count, 2) = -1.0f + k * 2.0f / (double(nz) - 1.0f);
             }
         }
     }
@@ -106,21 +132,34 @@ TEST(GlobalTest, CubeSignedDistance)
     igl::signed_distance(P, V, F, type, S, I, C, N);
     std::vector<Eigen::Vector3d> vertices;
     std::vector<Eigen::Vector3i> triangles;
-    std::cout << "------------------S---------------------" << std::endl;
-    std::cout << S << std::endl;
+
     std::cout << "------------------C---------------------" << std::endl;
     std::cout << C << std::endl;
     std::cout << "------------------I---------------------" << std::endl;
     std::cout << I << std::endl;
-    Eigen::RowVector3d point(2, 1, 0);
-    Eigen::VectorXi inside;
-    igl::copyleft::cgal::points_inside_component(V, F, point, inside);
-    if (inside(0) == 1) {
-        std::cout << "Point is inside the mesh." << std::endl;
-    }
-    else {
-        std::cout << "Point is outside the mesh." << std::endl;
-    }
+    // for (int i = 0; i < P.rows(); i++)
+    // {
+    //     if (i == 10)
+    //     {
+    //         std::cout << "I got you" << std::endl;
+    //     }
+    //     auto row = P.row(i);
+    //     Eigen::RowVector3d point(row(0), row(1), row(2));
+    //     if (inside_manifold_mesh(V, F, point))
+    //     {
+    //         S[i] = -1.0f * std::abs(S[i]);
+    //     }
+    //     else
+    //     {
+    //         S[i] = std::abs(S[i]);
+    //     }
+    // }
+    /*
+    * 1. use outside and inside function to deside symbol, inside also failed in some point, so it still not work
+    * 2. normalize to (-1, 1), still has symbol question in some points
+    */
+    std::cout << "------------------S---------------------" << std::endl;
+    std::cout << S << std::endl;
     int iso_value = 0;
     for(int k = 0; k < nz - 1; k++)
 	{
