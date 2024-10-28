@@ -68,7 +68,7 @@ int main()
             distance_symbol.set(i, true);
         }
     }
-    auto edgess = MC_Tables.at(distance_symbol);
+    auto edgess = MC_TABLES.at(distance_symbol);
     
     // for(const auto& elem: edge)
     // {

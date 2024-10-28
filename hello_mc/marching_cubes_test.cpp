@@ -59,9 +59,17 @@ bool inside_manifold_mesh(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, co
     }
 }
 
+TEST(GlobalTest, RotateMarchingCubes)
+{
+    init_tables();
+    //invert_tables();
+    print_mc_tables();
+}
 
 TEST(GlobalTest, CubeSignedDistance)
 {
+    init_tables();
+    invert_tables();
     Eigen::MatrixXd V(8, 3);
     V << 0.5f, 0.5f, 0.5f,
          0.5f, 2.5f, 0.5f,
@@ -157,7 +165,7 @@ TEST(GlobalTest, CubeSignedDistance)
                 std::vector<unsigned short int> edgess;
                 try
                 {
-                    edgess = MC_Tables.at(distance_symbol);
+                    edgess = MC_TABLES.at(distance_symbol);
                 }
                 catch (const std::out_of_range& e)
                 {
@@ -257,7 +265,7 @@ TEST(GlobalTest, SphereSignedDistance)
                 std::vector<unsigned short int> edgess;
                 try
                 {
-                    edgess = MC_Tables.at(distance_symbol);
+                    edgess = MC_TABLES.at(distance_symbol);
                 }
                 catch (const std::out_of_range& e)
                 {
@@ -283,13 +291,11 @@ TEST(GlobalTest, SphereSignedDistance)
 		}
 	}
     write_obj("./sphere.obj", vertices, triangles);
-
 }
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
-
+    ::testing::GTEST_FLAG(filter) = "GlobalTest.CubeSignedDistance";
     int result = RUN_ALL_TESTS();
-
     return result;
 }
