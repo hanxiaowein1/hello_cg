@@ -7,6 +7,7 @@
 #ifndef NOMINMAX
 #define NOMINMAX
 #endif
+#include "igl/readOFF.h"
 #include "igl/signed_distance.h"
 #include "igl/opengl/glfw/Viewer.h"
 #include "igl/copyleft/cgal/points_inside_component.h"
@@ -57,6 +58,128 @@ bool inside_manifold_mesh(const Eigen::MatrixXd& V, const Eigen::MatrixXi& F, co
     else {
         return false;
     }
+}
+
+TEST(GlobalTest, IGLBunny)
+{
+    init_tables();
+    invert_tables();
+    print_mc_tables();
+    int nx = 50;
+    int ny = 50;
+    int nz = 50;
+
+    Eigen::MatrixXd V;
+    Eigen::MatrixXi F;
+    std::string off_path = "D:\\Library\\libigl\\build\\_deps\\libigl_tutorial_tata-src\\bunny.off";
+    igl::readOFF(off_path, V, F);
+    Eigen::Vector3d m = V.colwise().minCoeff();
+    std::cout << m << std::endl;
+    Eigen::Vector3d M = V.colwise().maxCoeff();
+    std::cout << M << std::endl;
+    Eigen::MatrixXd P;
+	P.resize(nx * ny * nz, 3);
+	for(unsigned int k = 0; k < nz; k++)
+	{
+		double z_axis = m.z() + double(k) * (M.z() - m.z()) / double(nz - 1);
+		for(unsigned int j = 0; j < ny; j++)
+		{
+			double y_axis = m.y() + double(j) * (M.y() - m.y()) / double(ny - 1);
+			for(unsigned int i = 0; i < nx; i++)
+			{
+				double x_axis = m.x() + double(i) * (M.x() - m.x()) / double(nx - 1);
+				unsigned int count = k * ny * nx + j * nx + i;
+				P(count, 0) = x_axis;
+				P(count, 1) = y_axis;
+				P(count, 2) = z_axis;
+			}
+		}
+	}
+
+    Eigen::VectorXi I;
+    Eigen::MatrixXd N,C;
+    Eigen::VectorXd S;
+    igl::SignedDistanceType type = igl::SIGNED_DISTANCE_TYPE_PSEUDONORMAL;
+    igl::signed_distance(P, V, F, type, S, I, C, N);
+
+    // std::cout << "------------------S---------------------" << std::endl;
+    // std::cout << S << std::endl;
+
+    std::vector<Eigen::Vector3d> vertices;
+    std::vector<Eigen::Vector3i> triangles;
+    int iso_value = 0;
+
+    for(int k = 0; k < nz - 1; k++)
+	{
+		for(int j = 0; j < ny - 1; j++)
+		{
+			for(int i = 0; i < nx - 1; i++)
+			{
+				//  get cube
+                std::vector<Eigen::Vector3d> coors{
+                    {static_cast<double>(i), static_cast<double>(j), static_cast<double>(k)},
+                    {static_cast<double>(i), static_cast<double>(j + 1), static_cast<double>(k)},
+                    {static_cast<double>(i), static_cast<double>(j + 1), static_cast<double>(k + 1)},
+                    {static_cast<double>(i), static_cast<double>(j), static_cast<double>(k + 1)},
+                    {static_cast<double>(i + 1), static_cast<double>(j), static_cast<double>(k)},
+                    {static_cast<double>(i + 1), static_cast<double>(j + 1), static_cast<double>(k)},
+                    {static_cast<double>(i + 1), static_cast<double>(j + 1), static_cast<double>(k + 1)},
+                    {static_cast<double>(i + 1), static_cast<double>(j), static_cast<double>(k + 1)},
+                };
+				unsigned int count = k * ny * nx + j * nx + i;
+                std::vector<double> signed_distance{
+                    S[k * ny * nx + j * nx + i],
+                    S[k * ny * nx + (j + 1) * nx + i],
+                    S[(k + 1) * ny * nx + (j + 1) * nx + i],
+                    S[(k + 1) * ny * nx + j * nx + i],
+                    S[k * ny * nx + j * nx + i + 1],
+                    S[k * ny * nx + (j + 1) * nx + i + 1],
+                    S[(k + 1) * ny * nx + (j + 1) * nx + i + 1],
+                    S[(k + 1) * ny * nx + j * nx + i + 1],
+                };
+
+                std::bitset<8> distance_symbol;
+                for(auto distance = signed_distance.begin(); distance != signed_distance.end(); distance++)
+                {
+                    int index = std::distance(signed_distance.begin(), distance);
+                    if(*distance - iso_value < 0)
+                    {
+                        distance_symbol.set(index, false);
+                    }
+                    else
+                    {
+                        distance_symbol.set(index, true);
+                    }
+                }
+                std::vector<unsigned short int> edgess;
+                try
+                {
+                    edgess = MC_TABLES.at(distance_symbol);
+                }
+                catch (const std::out_of_range& e)
+                {
+                    std::cerr << "Caught std::out_of_range exception: " << e.what() << std::endl;
+                    throw e;
+                }
+                for(auto edges: edgess)
+                {
+                    Eigen::Vector3i triangle;
+                    int triangle_edge_count = 0;
+                    while(triangle_edge_count <= 2)
+                    {
+                        auto edge = static_cast<Edge>(edges & 0xF);
+                        auto vertex = get_vertex_by_edge(edge, coors, signed_distance);
+                        vertices.emplace_back(std::move(vertex));
+                        triangle[triangle_edge_count] = vertices.size() - 1;
+                        triangle_edge_count++;
+                        edges = edges >> 4;
+                    }
+                    triangles.emplace_back(std::move(triangle));
+                }
+            }
+        }
+    }
+    write_obj("./bunny.obj", vertices, triangles);
 }
 
 TEST(GlobalTest, RotateMarchingCubes)
@@ -295,7 +418,7 @@ TEST(GlobalTest, SphereSignedDistance)
 
 int main(int argc, char** argv) {
     ::testing::InitGoogleTest(&argc, argv);
-    ::testing::GTEST_FLAG(filter) = "GlobalTest.CubeSignedDistance";
+    ::testing::GTEST_FLAG(filter) = "GlobalTest.IGLBunny";
     int result = RUN_ALL_TESTS();
     return result;
 }

@@ -67,7 +67,7 @@ std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_TABLES = 
      * 
      */
     // face 0
-    // {0b11001110, {0x137, 0x179, 0x794}},  // v4 v0 v1
+    {0b11011100, {0x315, 0x358, 0x584}},  // v5 v0 v1
     // {0b11011100, {0x315, 0x354, 0x384}},  // v0 v1 v5
     // {0b11001101, {0x157, 0x178, 0x180}},  // v1 v5 v4
     // {0b11111111, {0x, 0x, 0x}},  // 
@@ -92,6 +92,17 @@ std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_TABLES = 
     // {0b11111111, {0x, 0x, 0x}},
     // {0b11111111, {0x, 0x, 0x}},
 
+    /**
+     * @brief case 6
+     * 
+     */
+    {0b11001011, {0x12A, 0x785, 0x598}},
+
+    /**
+     * @brief case 7
+     * 
+     */
+    {0b01011011, {0x12A, 0x67B, 0x459}},
 
     /**
      * @brief case 8
@@ -103,6 +114,42 @@ std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_TABLES = 
     // {0b01100110, {0x026, 0x046}},  // face 3
     // {0b11110000, {0x9AB, 0x9B8}},  // face 4
     // {0b00001111, {0x9AB, 0x9B8}},  // face 5
+
+    /**
+     * @brief case 9
+     * 
+     */
+    {0b11100100, {0x2B7, 0x274, 0x241, 0x149}},
+
+    /**
+     * @brief case 10
+     * 
+     */
+    {0b01101001, {0x2A0, 0x0A9, 0x6B8, 0x684}},
+
+    /**
+     * @brief case 11
+     * 
+     */
+    {0b11101000, {0x2A3, 0xA34, 0x374, 0xA94}},
+
+    /**
+     * @brief case 12
+     * 
+     */
+    {0b01011100, {0x67B, 0x315, 0x358, 0x845}},
+
+    /**
+     * @brief case 13
+     * 
+     */
+    {0b10100101, {0x019, 0x23B, 0x478, 0x56A}},
+
+    /**
+     * @brief case 14
+     * 
+     */
+    {0b11010100, {0x48B, 0x4B1, 0x451, 0xB12}},
 };
 
 // clock wise
