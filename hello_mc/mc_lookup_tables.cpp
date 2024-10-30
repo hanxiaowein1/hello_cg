@@ -1,6 +1,7 @@
 #include "mc_lookup_tables.h"
 #include <iostream>
 #include <format>
+#include <functional>
 
 // key: v8v7v6v5v4v3v2v1v0(0 is negative, 1 is positive, remember: bitset stores reversely)
 std::unordered_map<std::bitset<8>, std::vector<unsigned short int>> MC_TABLES = {
@@ -218,6 +219,39 @@ std::unordered_map<Edge, std::unordered_set<Vertex>> EDGE_VERTEX = {
     {Edge::e11, {Vertex::v3, Vertex::v7}},
 };
 
+std::unordered_map<Vertex, Vertex> VERTEX_UP_DOWN_FLIP = {
+    {Vertex::v0, Vertex::v3},
+    {Vertex::v1, Vertex::v2},
+    {Vertex::v2, Vertex::v1},
+    {Vertex::v3, Vertex::v0},
+    {Vertex::v4, Vertex::v7},
+    {Vertex::v5, Vertex::v6},
+    {Vertex::v6, Vertex::v5},
+    {Vertex::v7, Vertex::v4},
+};
+
+std::unordered_map<Vertex, Vertex> VERTEX_FRONT_BEHIND_FLIP = {
+    {Vertex::v0, Vertex::v4},
+    {Vertex::v1, Vertex::v5},
+    {Vertex::v2, Vertex::v6},
+    {Vertex::v3, Vertex::v7},
+    {Vertex::v4, Vertex::v0},
+    {Vertex::v5, Vertex::v1},
+    {Vertex::v6, Vertex::v2},
+    {Vertex::v7, Vertex::v3},
+};
+
+std::unordered_map<Vertex, Vertex> VERTEX_LEFT_RIGHT_FLIP = {
+    {Vertex::v0, Vertex::v1},
+    {Vertex::v1, Vertex::v0},
+    {Vertex::v2, Vertex::v3},
+    {Vertex::v3, Vertex::v2},
+    {Vertex::v4, Vertex::v5},
+    {Vertex::v5, Vertex::v4},
+    {Vertex::v6, Vertex::v7},
+    {Vertex::v7, Vertex::v6},
+};
+
 std::vector<Vertex> get_negative_vertices_from_signed_distance(const std::bitset<8>& signed_distance)
 {
     std::vector<Vertex> vertices;
@@ -381,7 +415,8 @@ std::vector<unsigned short> rotate_edge_in_axis_x(const std::vector<unsigned sho
     return rotated_edgess;
 }
 
-void init_tables()
+// rotate tables to get duplicate cases
+void rotate_tables()
 {
     std::unordered_map<std::bitset<8>, std::vector<unsigned short>> rotate_tables;
     for(auto [signed_distances, triangles]: MC_TABLES)
@@ -419,6 +454,167 @@ void init_tables()
         }
     }
     MC_TABLES.insert(rotate_tables.begin(), rotate_tables.end());
+}
+
+Edge flip_edge_up_down(const Edge& edge)
+{
+    auto vertices = EDGE_VERTEX.at(edge);
+    std::unordered_set<Vertex> flipped_vertices;
+    for(const auto& vertex: vertices)
+    {
+        flipped_vertices.emplace(VERTEX_UP_DOWN_FLIP.at(vertex));
+    }
+    return VERTEX_EDGE.at(flipped_vertices);
+}
+
+Edge flip_edge_front_behind(const Edge& edge)
+{
+    auto vertices = EDGE_VERTEX.at(edge);
+    std::unordered_set<Vertex> flipped_vertices;
+    for(const auto& vertex: vertices)
+    {
+        flipped_vertices.emplace(VERTEX_FRONT_BEHIND_FLIP.at(vertex));
+    }
+    return VERTEX_EDGE.at(flipped_vertices);
+}
+
+Edge flip_edge_left_right(const Edge& edge)
+{
+    auto vertices = EDGE_VERTEX.at(edge);
+    std::unordered_set<Vertex> flipped_vertices;
+    for(const auto& vertex: vertices)
+    {
+        flipped_vertices.emplace(VERTEX_LEFT_RIGHT_FLIP.at(vertex));
+    }
+    return VERTEX_EDGE.at(flipped_vertices);
+}
+
+std::vector<unsigned short> flip_edge_up_down(const std::vector<unsigned short>& edgess)
+{
+    std::vector<unsigned short> flipped_edgess;
+    for(auto edges: edgess)
+    {
+        unsigned short flipped_edges = 0x0000;
+        for(unsigned short i = 0; i < 3; i++)
+        {
+            edges = edges >> (i == 0 ? 0 : 4);
+            auto edge = edges & 0xF;
+            auto flipped_edge = flip_edge_up_down(static_cast<Edge>(edge));
+            flipped_edges = (flipped_edges | (static_cast<unsigned short>(flipped_edge) << (4 * i)));
+        }
+        flipped_edgess.emplace_back(flipped_edges);
+    }
+    return flipped_edgess;
+}
+
+std::vector<unsigned short> flip_edge_front_behind(const std::vector<unsigned short>& edgess)
+{
+    std::vector<unsigned short> flipped_edgess;
+    for(auto edges: edgess)
+    {
+        unsigned short flipped_edges = 0x0000;
+        for(unsigned short i = 0; i < 3; i++)
+        {
+            edges = edges >> (i == 0 ? 0 : 4);
+            auto edge = edges & 0xF;
+            auto flipped_edge = flip_edge_front_behind(static_cast<Edge>(edge));
+            flipped_edges = (flipped_edges | (static_cast<unsigned short>(flipped_edge) << (4 * i)));
+        }
+        flipped_edgess.emplace_back(flipped_edges);
+    }
+    return flipped_edgess;
+}
+
+std::vector<unsigned short> flip_edge_left_right(const std::vector<unsigned short>& edgess)
+{
+    std::vector<unsigned short> flipped_edgess;
+    for(auto edges: edgess)
+    {
+        unsigned short flipped_edges = 0x0000;
+        for(unsigned short i = 0; i < 3; i++)
+        {
+            edges = edges >> (i == 0 ? 0 : 4);
+            auto edge = edges & 0xF;
+            auto flipped_edge = flip_edge_left_right(static_cast<Edge>(edge));
+            flipped_edges = (flipped_edges | (static_cast<unsigned short>(flipped_edge) << (4 * i)));
+        }
+        flipped_edgess.emplace_back(flipped_edges);
+    }
+    return flipped_edgess;
+}
+
+void flip_tables()
+{
+    std::unordered_map<std::bitset<8>, std::vector<unsigned short>> flipped_tables;
+    for(auto [signed_distances, triangles]: MC_TABLES)
+    {
+        auto vertices = get_negative_vertices_from_signed_distance(signed_distances);
+        // auto lambda = [&](){
+
+        // };
+        // up downside flip
+        {
+            std::vector<Vertex> flipped_vertices;
+            for(const auto& vertex: vertices)
+            {
+                flipped_vertices.emplace_back(VERTEX_UP_DOWN_FLIP.at(vertex));
+            }
+            auto flipped_edgess = flip_edge_up_down(triangles);
+            std::bitset<8> flipped_signed_distance{0b11111111};
+            for(const auto& flipped_vertex: flipped_vertices)
+            {
+                flipped_signed_distance.set(static_cast<int>(flipped_vertex), false);
+            }
+            if(!flipped_tables.contains(flipped_signed_distance))
+            {
+                flipped_tables.emplace(std::make_pair(flipped_signed_distance, flipped_edgess));
+            }
+        }
+        // front behind flip
+        {
+            std::vector<Vertex> flipped_vertices;
+            for(const auto& vertex: vertices)
+            {
+                flipped_vertices.emplace_back(VERTEX_FRONT_BEHIND_FLIP.at(vertex));
+            }
+            auto flipped_edgess = flip_edge_front_behind(triangles);
+            std::bitset<8> flipped_signed_distance{0b11111111};
+            for(const auto& flipped_vertex: flipped_vertices)
+            {
+                flipped_signed_distance.set(static_cast<int>(flipped_vertex), false);
+            }
+            if(!flipped_tables.contains(flipped_signed_distance))
+            {
+                flipped_tables.emplace(std::make_pair(flipped_signed_distance, flipped_edgess));
+            }
+        }
+        // left right flip
+        {
+            std::vector<Vertex> flipped_vertices;
+            for(const auto& vertex: vertices)
+            {
+                flipped_vertices.emplace_back(VERTEX_LEFT_RIGHT_FLIP.at(vertex));
+            }
+            auto flipped_edgess = flip_edge_left_right(triangles);
+            std::bitset<8> flipped_signed_distance{0b11111111};
+            for(const auto& flipped_vertex: flipped_vertices)
+            {
+                flipped_signed_distance.set(static_cast<int>(flipped_vertex), false);
+            }
+            if(!flipped_tables.contains(flipped_signed_distance))
+            {
+                flipped_tables.emplace(std::make_pair(flipped_signed_distance, flipped_edgess));
+            }
+        }
+    }
+    MC_TABLES.insert(flipped_tables.begin(), flipped_tables.end());
+}
+
+void init_tables()
+{
+    rotate_tables();
+    // that's strange, it seems only rotate will be enough to search all cubes, no need flip
+    // flip_tables();
 }
 
 void invert_tables()
