@@ -4,8 +4,9 @@
 #include <boost/functional/hash.hpp>
 #include <bitset>
 #include <queue>
+#include <stdexcept>
 #include "mc33_global_test.h"
-
+#include <format>
 /**
  * @brief first level deside big case, second level deside divided case
  * first level key is distance_sign, second level is connected vertices of ambiguous
@@ -24,7 +25,7 @@ std::unordered_map<
         0b11111111,
         {
             {
-                {{}}, {}
+                {}, {}
             }
         }
     },
@@ -34,7 +35,7 @@ std::unordered_map<
         0b11111110,
         {
             {
-                {{}}, {0x038}
+                {}, {0x038}
             }
         }
     },
@@ -44,7 +45,7 @@ std::unordered_map<
         0b11111100,
         {
             {
-                {{}}, {0x381, 0x189}
+                {}, {0x381, 0x189}
             }
         }
     },
@@ -70,7 +71,7 @@ std::unordered_map<
         {
             // case 4.1.1
             {
-                {{}}, {0x478, 0x12A}
+                {}, {0x478, 0x12A}
             },
             // case 4.1.2
             {
@@ -84,14 +85,14 @@ std::unordered_map<
         0b11011100,
         {
             {
-                {{}}, {0x315, 0x358, 0x854}
+                {}, {0x315, 0x358, 0x854}
             }
         }
     },
 
     // case 6
     {
-        0x00111011,
+        0b11001011,
         {
             // case 6.1.1
             {
@@ -109,7 +110,7 @@ std::unordered_map<
 
     // case 7
     {
-        0x01011011,
+        0b01011011,
         {
             // case 7.1
             {
@@ -247,6 +248,16 @@ std::unordered_map<
                 {0x12A, 0x480, 0x803, 0x378, 0x37B, 0x7B6, 0x674, 0x645, 0x459, 0x049}
             }
         }
+    },
+
+    // case 14
+    {
+        0b11010100,
+        {
+            {
+                {}, {0x48B, 0x4B1, 0x451, 0xB12}
+            }
+        }
     }
 };
 
@@ -274,6 +285,7 @@ std::unordered_map<std::unordered_set<Vertex>, Edge, boost::hash<std::unordered_
     {{Vertex::v1, Vertex::v5}, Edge::e9},
     {{Vertex::v2, Vertex::v6}, Edge::e10},
     {{Vertex::v3, Vertex::v7}, Edge::e11},
+    {{Vertex::vc1, Vertex::vc2}, Edge::ec},
 };
 
 std::unordered_map<Edge, std::unordered_set<Vertex>> EDGE_VERTEX = {
@@ -289,6 +301,7 @@ std::unordered_map<Edge, std::unordered_set<Vertex>> EDGE_VERTEX = {
     {Edge::e9, {Vertex::v1, Vertex::v5}},
     {Edge::e10, {Vertex::v2, Vertex::v6}},
     {Edge::e11, {Vertex::v3, Vertex::v7}},
+    {Edge::ec, {Vertex::vc1, Vertex::vc2}},
 };
 
 std::unordered_map<std::unordered_set<Vertex>, unsigned short, boost::hash<std::unordered_set<Vertex>>> NEIGHBOR_DISTANCE = {
@@ -411,6 +424,49 @@ std::unordered_map<std::unordered_set<Vertex>, std::unordered_map<std::string, V
     }
 };
 
+// clock wise
+std::unordered_map<Vertex, Vertex> VERTEX_X_ROTATE = {
+    {Vertex::v0, Vertex::v3},
+    {Vertex::v1, Vertex::v0},
+    {Vertex::v2, Vertex::v1},
+    {Vertex::v3, Vertex::v2},
+    {Vertex::v4, Vertex::v7},
+    {Vertex::v5, Vertex::v4},
+    {Vertex::v6, Vertex::v5},
+    {Vertex::v7, Vertex::v6},
+    {Vertex::vc1, Vertex::vc1},
+    {Vertex::vc2, Vertex::vc2},
+};
+
+// clock wise
+std::unordered_map<Vertex, Vertex> VERTEX_Y_ROTATE = {
+    {Vertex::v0, Vertex::v4},
+    {Vertex::v1, Vertex::v5},
+    {Vertex::v2, Vertex::v1},
+    {Vertex::v3, Vertex::v0},
+    {Vertex::v4, Vertex::v7},
+    {Vertex::v5, Vertex::v6},
+    {Vertex::v6, Vertex::v2},
+    {Vertex::v7, Vertex::v3},
+    {Vertex::vc1, Vertex::vc1},
+    {Vertex::vc2, Vertex::vc2},
+};
+
+// clock wise
+std::unordered_map<Vertex, Vertex> VERTEX_Z_ROTATE = {
+    {Vertex::v0, Vertex::v1},
+    {Vertex::v1, Vertex::v5},
+    {Vertex::v2, Vertex::v6},
+    {Vertex::v3, Vertex::v2},
+    {Vertex::v4, Vertex::v0},
+    {Vertex::v5, Vertex::v4},
+    {Vertex::v6, Vertex::v7},
+    {Vertex::v7, Vertex::v3},
+    {Vertex::vc1, Vertex::vc1},
+    {Vertex::vc2, Vertex::vc2},
+};
+
+
 bool vertex_in_top_face(const Vertex& vertex)
 {
     auto vertices = FACE_VERTICES.at(TOP_FACE);
@@ -429,6 +485,38 @@ bool vertex_in_bottom_face(const Vertex& vertex)
         return true;
     }
     return false;
+}
+
+bool has_value_bigger_than_zero_in_interval(
+    const double& a, const double& b, const double& c,
+    const double& start = 0.0f, const double& end = 1.0f
+)
+{
+    auto fx = [](double a, double b, double c, double x) -> double{
+        return a * std::pow(x, 2) + b * x + c;
+    };
+    if(a >= 0.0f)
+    {
+        if(fx(a, b, c, start) > 0 || fx(a, b, c, end) > 0)
+        {
+            return true;
+        }
+        return false;
+    }
+    else
+    {
+        // must has root, so(b^2 - 4ac > 0)
+        if(std::pow(b, 2) - 4 * a * c > 0)
+        {
+            // if (fx(start) > 0) or (fx(end) > 0) or (-b/2a between start and end)
+            if(fx(a, b, c, start) > 0 || fx(a, b, c, end) > 0 || (-b / 2 * a > start && -b / 2 * a < end))
+            {
+                return true;
+            }
+            return false;
+        }
+        return false;
+    }
 }
 
 /**
@@ -484,18 +572,22 @@ bool vertex_interpolation_connected(const std::vector<double>& signed_distance, 
             auto a = (distance_a1 - distance_a0)*(distance_c1 - distance_c0) - (distance_b1 - distance_b0) * (distance_d1 - distance_d0);
             auto b = distance_c0*(distance_a1 - distance_a0) + distance_a0*(distance_c1 - distance_c0) - distance_d0*(distance_b1 - distance_b0) - distance_b0*(distance_d1 - distance_d0);
             auto c = distance_a0*distance_c0 - distance_b0 * distance_d0;
-            if(a < 0)
+            if(has_value_bigger_than_zero_in_interval(a, b, c, 0.0f, 1.0f))
             {
-                auto t_max = -b / (2 * a);
-                if(t_max > 0.0f && t_max < 1.0f)
-                {
-                    if(a * std::pow(t_max, 2) + b * t_max + c > 0)
-                    {
-                        // joined
-                        return true;
-                    }
-                }
+                return true;
             }
+            // if(a < 0)
+            // {
+            //     auto t_max = -b / (2 * a);
+            //     if(t_max > 0.0f && t_max < 1.0f)
+            //     {
+            //         if(a * std::pow(t_max, 2) + b * t_max + c > 0)
+            //         {
+            //             // joined
+            //             return true;
+            //         }
+            //     }
+            // }
             break;
         }
         default:
@@ -559,6 +651,244 @@ bool vertex_connected(const std::bitset<8>& distance_sign, const Vertex &vertex1
         visited_vertices.emplace(current_vertex.first);
     }
     return false;
+}
+
+Vertex rotate_vertex_in_axis(const Vertex& vertex, const Axis& axis, int times = 1)
+{
+    Vertex rotated_vertex = vertex;
+    for(int i = 0; i < times; i++)
+    {
+        switch(axis)
+        {
+        case Axis::x:
+            rotated_vertex = VERTEX_X_ROTATE.at(rotated_vertex);
+            break;
+        case Axis::y:
+            rotated_vertex = VERTEX_Y_ROTATE.at(rotated_vertex);
+            break;
+        case Axis::z:
+            rotated_vertex = VERTEX_Z_ROTATE.at(rotated_vertex);
+            break;
+        default:
+            throw std::invalid_argument("axis is weird");
+            break;
+        }
+    }
+    return rotated_vertex;
+}
+
+std::vector<Vertex> rotate_vertices_in_axis(const std::vector<Vertex>& vertices, const Axis& axis, int times = 1)
+{
+    std::vector<Vertex> rotated_vertices;
+    for(const auto& vertex: vertices)
+    {
+        auto rotated_vertex = vertex;
+        rotated_vertex = rotate_vertex_in_axis(rotated_vertex, axis, times);
+        rotated_vertices.emplace_back(rotated_vertex);
+    }
+    return rotated_vertices;
+}
+
+Edge rotate_edge_in_axis(const Edge& edge, const Axis& axis, int times = 1)
+{
+    auto vertices = EDGE_VERTEX.at(edge);
+    std::unordered_set<Vertex> rotated_vertices;
+    for(const auto& vertex: vertices)
+    {
+        auto rotated_vertex = vertex;
+        for(int i = 0; i < times; i++)
+        {
+            switch (axis)
+            {
+            case Axis::x:
+                rotated_vertex = VERTEX_X_ROTATE.at(rotated_vertex);
+                break;
+            case Axis::y:
+                rotated_vertex = VERTEX_Y_ROTATE.at(rotated_vertex);
+                break;
+            case Axis::z:
+                rotated_vertex = VERTEX_Z_ROTATE.at(rotated_vertex);
+                break;
+            default:
+                throw std::invalid_argument("axis is weird");
+                break;
+            }
+        }
+        rotated_vertices.emplace(rotated_vertex);
+    }
+    auto rotated_edge = VERTEX_EDGE.at(rotated_vertices);
+    return rotated_edge;
+}
+
+std::vector<unsigned short> rotate_edge_in_axis(const std::vector<unsigned short>& edgess, const Axis& axis, int times = 1)
+{
+    std::vector<unsigned short> rotated_edgess;
+    for(auto edges: edgess)
+    {
+        unsigned short rotated_edges = 0x0000;
+        for(int i = 0; i < 3; i++)
+        {
+            edges = edges >> (i == 0 ? 0 : 4);
+            auto edge = edges & 0xF;
+            Edge rotated_edge;
+            rotated_edge = rotate_edge_in_axis(static_cast<Edge>(edge), axis, times);
+            rotated_edges = (rotated_edges | (static_cast<unsigned short>(rotated_edge) << (4 * i)));
+        }
+        rotated_edgess.emplace_back(rotated_edges);
+    }
+    return rotated_edgess;
+}
+
+std::vector<Vertex> get_negative_vertices_from_signed_distance(const std::bitset<8>& signed_distance)
+{
+    std::vector<Vertex> vertices;
+    for(int i = 0; i < signed_distance.size(); i++)
+    {
+        if(signed_distance[i] == false)
+        {
+            vertices.emplace_back(static_cast<Vertex>(i));
+        }
+    }
+    return vertices;
+}
+
+std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>> rotate_vertices_in_axis(
+    const std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>& verticess,
+    const Axis& axis, int times = 1
+)
+{
+    std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>> rotated_verticess;
+    for(const auto& connected_vertices: verticess)
+    {
+        std::unordered_set<Vertex> rotated_connnected_vertices;
+        for(const auto& connected_vertex: connected_vertices)
+        {
+            Vertex rotated_connected_vertex = rotate_vertex_in_axis(connected_vertex, axis, times);
+            rotated_connnected_vertices.emplace(rotated_connected_vertex);
+        }
+        rotated_verticess.emplace(rotated_connnected_vertices);
+    }
+    return rotated_verticess;
+}
+
+void init_tables()
+{
+    // rotate table
+    std::unordered_map<
+        std::bitset<8>,
+        std::unordered_map<
+            std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>,
+            std::vector<unsigned short>,
+            boost::hash<std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>>
+        >
+    > rotated_tables;
+    for(auto [distance_signs, sub_cases]: MC33_TABLES)
+    {
+        // get negative vertex
+        auto vertices = get_negative_vertices_from_signed_distance(distance_signs);
+        for(auto [connected_verticess, triangles]: sub_cases)
+        {
+            for(unsigned short k = 0; k < 4; k++)
+            {
+                auto z_rotated_vertices = rotate_vertices_in_axis(vertices, Axis::z, k);
+                auto z_rotated_edgess = rotate_edge_in_axis(triangles, Axis::z, k);
+                auto z_rotated_connected_vertices = rotate_vertices_in_axis(connected_verticess, Axis::z, k);
+                for(unsigned short j = 0; j < 4; j++)
+                {
+                    auto y_rotated_vertices = rotate_vertices_in_axis(z_rotated_vertices, Axis::y, j);
+                    auto y_rotated_edgess = rotate_edge_in_axis(z_rotated_edgess, Axis::y, j);
+                    auto y_rotated_connected_vertices = rotate_vertices_in_axis(z_rotated_connected_vertices, Axis::y, j);
+                    for(unsigned short i = 0; i < 4; i++)
+                    {
+                        auto x_rotated_vertices = rotate_vertices_in_axis(y_rotated_vertices, Axis::x, i);
+                        auto x_rotated_edgess = rotate_edge_in_axis(y_rotated_edgess, Axis::x, i);
+                        auto x_rotated_connected_vertices = rotate_vertices_in_axis(y_rotated_connected_vertices, Axis::x, i);
+                        // use rotated vertices to construct new signed distance
+                        std::bitset<8> rotated_signed_distance{0b11111111};
+                        for(const auto& x_rotated_vertice: x_rotated_vertices)
+                        {
+                            rotated_signed_distance.set(static_cast<int>(x_rotated_vertice), false);
+                        }
+                        if(!rotated_tables.contains(rotated_signed_distance))
+                        {
+                            std::unordered_map<
+                                std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>,
+                                std::vector<unsigned short>,
+                                boost::hash<std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>>
+                            > temp_map;
+                            temp_map.emplace(std::make_pair(x_rotated_connected_vertices, x_rotated_edgess));
+                            rotated_tables.emplace(std::make_pair(rotated_signed_distance, temp_map));
+                        }
+                        else
+                        {
+                            if(!rotated_tables.at(rotated_signed_distance).contains(x_rotated_connected_vertices))
+                            {
+                                rotated_tables.at(rotated_signed_distance).emplace(std::make_pair(x_rotated_connected_vertices, x_rotated_edgess));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    MC33_TABLES.insert(rotated_tables.begin(), rotated_tables.end());
+    std::cout << "after rotate, mc33 table size is: " << MC33_TABLES.size() << std::endl;
+
+    // invert distance signs
+    std::unordered_map<
+        std::bitset<8>,
+        std::unordered_map<
+            std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>,
+            std::vector<unsigned short>,
+            boost::hash<std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>>
+        >
+    > invert_table;
+    for(auto [key, value]: MC33_TABLES)
+    {
+        auto origin = key;
+        origin.flip();
+        invert_table.emplace(std::make_pair(origin, value));
+    }
+
+    MC33_TABLES.insert(invert_table.begin(), invert_table.end());
+
+    std::cout << "after invert, mc33 table size is: " << MC33_TABLES.size() << std::endl;
+}
+
+void print_mc33_table()
+{
+    for(const auto& [distances_signs, sub_cases]: MC33_TABLES)
+    {
+        std::cout << "{ distances_signs: "<< distances_signs << ", ";
+        std::cout << "sub_cases: {";
+        for(const auto& [connected_verticess, triangles]: sub_cases)
+        {
+            std::cout << "{" << "connected_vertices: {";
+            for(const auto& connected_vertices: connected_verticess)
+            {
+                std::cout << "{";
+                for(const auto& connected_vertex: connected_vertices)
+                {
+                    std::cout << static_cast<unsigned short>(connected_vertex) << " ";
+                }
+                std::cout << "},";
+            }
+            std::cout << "}, triangles:{";
+            for(const auto& triangle: triangles)
+            {
+                std::cout << std::format("{:#x} ", triangle) << ", ";
+            }
+            std::cout << "}";
+        }
+        std::cout << "}," << std::endl;
+    }
+}
+
+TEST(GlobalTest, init_tables)
+{
+    init_tables();
+    print_mc33_table();
 }
 
 TEST(GlobalTest, vertex_interpolation_connected_cube_diagnal_connected)
@@ -668,5 +998,55 @@ TEST(GlobalTest, vertex_connected_cube_diagnal_disconnected)
         Vertex v2 = Vertex::v6;
         auto connected = vertex_connected(signed_distance, v1, v2);
         ASSERT_EQ(connected, false);
+    }
+}
+
+TEST(GlobalTest, has_value_bigger_than_zero_in_interval)
+{
+    double start = 0.0f, end = 1.0f;
+    // test a bigger than 0, there is no value than 0
+    {
+        double a = 1.0f, b = 1.0f, c = -3.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, false);
+    }
+    // test a bigger than 0, there are values bigger than 0
+    // start is bigger than 0, but end not
+    {
+        double a = 1.0f, b = -3.0f, c = 1.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, true);
+    }
+    // end is bigger than 0, but start not
+    {
+        double a = 1.0f, b = 1.0f, c = -1.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, true);
+    }
+    // start and end are all bigger than 0
+    {
+        double a = 1.0f, b = 1.0f, c = 1.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, true);
+    }
+
+    // test a smaller than 0
+    // test no root
+    {
+        double a = -1.0f, b = -1.0f, c = -1.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, false);
+    }
+    // test has root, but no value bigger than 0
+    {
+        double a = -1.0f, b = -3.0f, c = -1.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, false);
+    }
+    // test has root, and has value bigger than 0
+    {
+        double a = -1.0f, b = 1.0f, c = -1.0f / 8.0f;
+        auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
+        ASSERT_EQ(result, true);
     }
 }
