@@ -209,6 +209,11 @@ std::unordered_map<
             {
                 {{Vertex::v3, Vertex::v4}, {Vertex::v5, Vertex::v7}, {Vertex::v1, Vertex::v7}},
                 {0xC15, 0xC13, 0xC38, 0xC48, 0xC47, 0xCB7, 0xCB6, 0xC65}
+            },
+            // case 12.3
+            {
+                {{Vertex::v4, Vertex::v6}, {Vertex::v2, Vertex::v4}, {Vertex::v0, Vertex::v7}},
+                {0xC84, 0xC45, 0xC51, 0xC13, 0xC3B, 0xCB6, 0xC67, 0xC78}
             }
         }
     },
