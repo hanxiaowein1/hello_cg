@@ -511,10 +511,10 @@ bool has_value_bigger_than_zero_in_interval(
     else
     {
         // must has root, so(b^2 - 4ac > 0)
-        if(std::pow(b, 2) - 4 * a * c > 0)
+        if(std::pow(b, 2) - 4.0f * a * c > 0)
         {
             // if (fx(start) > 0) or (fx(end) > 0) or (-b/2a between start and end)
-            if(fx(a, b, c, start) > 0 || fx(a, b, c, end) > 0 || (-b / 2 * a > start && -b / 2 * a < end))
+            if(fx(a, b, c, start) > 0 || fx(a, b, c, end) > 0 || (-b / (2.0f * a) > start && -b / (2.0f * a) < end))
             {
                 return true;
             }
