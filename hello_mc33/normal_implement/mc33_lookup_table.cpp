@@ -32,20 +32,20 @@ std::unordered_map<
 
     // case 1
     {
-        0b11111110,
+        0b11101111,
         {
             {
-                {}, {0x038}
+                {}, {0x487}
             }
         }
     },
 
     // case 2
     {
-        0b11111100,
+        0b11001111,
         {
             {
-                {}, {0x381, 0x189}
+                {}, {0x875, 0x985}
             }
         }
     },
@@ -56,11 +56,11 @@ std::unordered_map<
         {
             // case 3.1
             {
-                {{Vertex::v5, Vertex::v7}}, {0x478, 0x56A}
+                {{Vertex::v5, Vertex::v7}}, {0x487, 0x56A}
             },
             // case 3.2
             {
-                {{Vertex::v4, Vertex::v6}}, {0x786, 0x86A, 0x8A5, 0x854}
+                {{Vertex::v4, Vertex::v6}}, {0x876, 0x86A, 0x8A5, 0x854}
             },
         }
     },
@@ -71,11 +71,11 @@ std::unordered_map<
         {
             // case 4.1.1
             {
-                {}, {0x478, 0x12A}
+                {}, {0x487, 0x1A2}
             },
             // case 4.1.2
             {
-                {{Vertex::v2, Vertex::v4}}, {0x27A, 0xA74, 0xA41, 0x184, 0x218, 0x278}
+                {{Vertex::v2, Vertex::v4}}, {0x27A, 0xA74, 0xA41, 0x148, 0x218, 0x287}
             }
         }
     },
@@ -85,7 +85,7 @@ std::unordered_map<
         0b11011100,
         {
             {
-                {}, {0x315, 0x358, 0x854}
+                {}, {0x351, 0x385, 0x845}
             }
         }
     },
@@ -96,14 +96,14 @@ std::unordered_map<
         {
             // case 6.1.1
             {
-                {{Vertex::v1, Vertex::v6}}, {0x785, 0x859, 0x12A}
+                {{Vertex::v1, Vertex::v6}}, {0x758, 0x859, 0x1A2}
             },
             // case 6.1.2
             {
-                {{Vertex::v1, Vertex::v6}, {Vertex::v2, Vertex::v4}}, {0x5A9, 0xA91, 0x189, 0x128, 0x278, 0x2A7, 0xA75}
+                {{Vertex::v1, Vertex::v6}, {Vertex::v2, Vertex::v4}}, {0x59A, 0xA91, 0x198, 0x182, 0x287, 0x27A, 0xA75}
             },
             {
-                {{Vertex::v2, Vertex::v4}, {Vertex::v2, Vertex::v5}}, {0x918, 0x128, 0x278, 0x2A7, 0xA57}
+                {{Vertex::v2, Vertex::v4}, {Vertex::v2, Vertex::v5}}, {0x981, 0x182, 0x287, 0x27A, 0xA75}
             }
         }
     },
@@ -114,28 +114,28 @@ std::unordered_map<
         {
             // case 7.1
             {
-                {{Vertex::v3, Vertex::v6}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v6}, {Vertex::v0, Vertex::v6}}, {0x12A, 0x37B, 0x459},
+                {{Vertex::v3, Vertex::v6}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v6}, {Vertex::v0, Vertex::v6}}, {0x1A2, 0x37B, 0x459},
             },
             // case 7.2
             {
                 {{Vertex::v2, Vertex::v7}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v6}, {Vertex::v0, Vertex::v6}},
-                {0x827, 0x721, 0x761, 0x6A1, 0x459}
+                {0xB27, 0x721, 0x716, 0x61A, 0x459}
             },
             // case 7.3
             {
                 {{Vertex::v2, Vertex::v7}, {Vertex::v2, Vertex::v5}, {Vertex::v4, Vertex::v6}, {Vertex::v0, Vertex::v6}},
                 // C meanings points interpolated in middle of cube
-                {0xC78, 0xC28, 0xC21, 0xC19, 0xC49, 0xC45, 0xCA5, 0xC6A, 0xC67},
+                {0xC7B, 0xCB2, 0xC21, 0xC19, 0xC94, 0xC45, 0xC5A, 0xCA6, 0xC67},
             },
             // case 7.4.1
             {
                 {{Vertex::v2, Vertex::v7}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}},
-                {0x47B, 0x491, 0x21B, 0xB41, 0x56A}
+                {0x47B, 0x419, 0x21B, 0xB14, 0x5A6}
             },
             // case 7.4.2
             {
                 {{Vertex::v2, Vertex::v7}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}, {Vertex::v0, Vertex::v6}},
-                {0x67B, 0x675, 0x574, 0x459, 0x591, 0x51A, 0x12A, 0x26A, 0x2B6}
+                {0x67B, 0x657, 0x547, 0x459, 0x519, 0x5A1, 0x1A2, 0x2A6, 0x26B}
             }
         }
     },
@@ -167,17 +167,17 @@ std::unordered_map<
             // case 10.1.1
             {
                 {{Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v5}, {Vertex::v0, Vertex::v6}, {Vertex::v3, Vertex::v5}},
-                {0x2A0, 0x0A9, 0x6B8, 0x684}
+                {0x20A, 0x09A, 0x68B, 0x648}
             },
             // case 10.1.2
             {
                 {{Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v2}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
-                {0xB6A, 0x2BA, 0x2B0, 0xB80, 0x084, 0x490, 0x6A4, 0x49A}
+                {0xB6A, 0x2BA, 0x20B, 0xB08, 0x048, 0x409, 0x64A, 0x49A}
             },
             // case 10.2
             {
                 {{Vertex::v0, Vertex::v5}, {Vertex::v1, Vertex::v4}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
-                {0xC2A, 0xCA9, 0xC49, 0xC46, 0xC6B, 0xCB8, 0xC08}
+                {0xCA2, 0xC9A, 0xC49, 0xC64, 0xCB6, 0xC8B, 0xC08}
             }
         }
     },
@@ -187,7 +187,7 @@ std::unordered_map<
         0b11101000,
         {
             {
-                {}, {0x2A3, 0xA34, 0x374, 0xA94}
+                {}, {0x23A, 0xA34, 0x374, 0xA49}
             }
         }
     },
@@ -198,17 +198,17 @@ std::unordered_map<
         {
             // case 12.1.1
             {
-                {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}}, {0x67B, 0x315, 0x358, 0x845}
+                {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}}, {0x67B, 0x351, 0x385, 0x845}
             },
             // case 12.1.2
             {
                 {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v7}},
-                {0x3B8, 0xB78, 0x487, 0x476, 0x465, 0x561, 0xB61, 0xB13}
+                {0x38B, 0xB87, 0x478, 0x467, 0x456, 0x516, 0xB61, 0xB13}
             },
             // case 12.2
             {
                 {{Vertex::v3, Vertex::v4}, {Vertex::v5, Vertex::v7}, {Vertex::v1, Vertex::v7}},
-                {0xC15, 0xC13, 0xC38, 0xC48, 0xC47, 0xCB7, 0xCB6, 0xC65}
+                {0xC51, 0xC13, 0xC38, 0xC84, 0xC47, 0xC7B, 0xCB6, 0xC65}
             },
             // case 12.3
             {
@@ -225,32 +225,32 @@ std::unordered_map<
             // case 13.1
             {
                 {{Vertex::v2, Vertex::v7}, {Vertex::v0, Vertex::v5}, {Vertex::v0, Vertex::v7}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}, {Vertex::v0, Vertex::v2}},
-                {0x019, 0x23B, 0x478, 0x56A}
+                {0x019, 0x2B3, 0x487, 0x56A}
             },
             // case 13.2
             {
                 {{Vertex::v3, Vertex::v6}, {Vertex::v0, Vertex::v5}, {Vertex::v0, Vertex::v7}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}, {Vertex::v0, Vertex::v2}},
-                {0x478, 0x019, 0x2A5, 0x253, 0x35B, 0xB56}
+                {0x487, 0x091, 0x2A5, 0x253, 0x35B, 0xB56}
             },
             // case 13.3
             {
                 {{Vertex::v3, Vertex::v6}, {Vertex::v0, Vertex::v5}, {Vertex::v3, Vertex::v4}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}, {Vertex::v0, Vertex::v2}},
-                {0xCA5, 0xC2A, 0xC23, 0xC38, 0xC48, 0xC47, 0xC7B, 0xCB6, 0xC65, 0x019}
+                {0xCA5, 0xC2A, 0xC32, 0xC83, 0xC48, 0xC74, 0xCB7, 0xC6B, 0xC56, 0x091}
             },
             // case 13.4
             {
                 {{Vertex::v0, Vertex::v6}, {Vertex::v0, Vertex::v5}, {Vertex::v3, Vertex::v4}, {Vertex::v2, Vertex::v5}, {Vertex::v5, Vertex::v7}, {Vertex::v1, Vertex::v3}},
-                {0xC03, 0xC38, 0xC84, 0xC74, 0xC7B, 0xCB6, 0xC65, 0xC5A, 0xCA2, 0xC21, 0xC19, 0xC90}
+                {0xC30, 0xC83, 0xC48, 0xC47, 0xCB7, 0xC6B, 0xC56, 0xCA5, 0xC2A, 0xC12, 0xC91, 0xC09}
             },
             // case 13.5.1
             {
                 {{Vertex::v3, Vertex::v6}, {Vertex::v0, Vertex::v5}, {Vertex::v0, Vertex::v7}, {Vertex::v1, Vertex::v6}, {Vertex::v5, Vertex::v7}, {Vertex::v1, Vertex::v3}},
-                {0x478, 0x12A, 0xB36, 0x306, 0x605, 0x059}
+                {0x487, 0x12A, 0xB36, 0x306, 0x605, 0x095}
             },
             // case 13.5.2
             {
                 {{Vertex::v3, Vertex::v5}, {Vertex::v1, Vertex::v4}, {Vertex::v0, Vertex::v7}, {Vertex::v1, Vertex::v6}, {Vertex::v5, Vertex::v7}, {Vertex::v1, Vertex::v3}},
-                {0x12A, 0x480, 0x803, 0x378, 0x37B, 0x7B6, 0x674, 0x645, 0x459, 0x049}
+                {0x12A, 0x480, 0x803, 0x387, 0x37B, 0x76B, 0x674, 0x645, 0x495, 0x094}
             }
         }
     },
@@ -260,7 +260,7 @@ std::unordered_map<
         0b11010100,
         {
             {
-                {}, {0x48B, 0x4B1, 0x451, 0xB12}
+                {}, {0x4B8, 0x41B, 0x451, 0xB12}
             }
         }
     }
