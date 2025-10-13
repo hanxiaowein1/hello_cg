@@ -114,7 +114,7 @@ std::unordered_map<
         {
             // case 7.1
             {
-                {{Vertex::v3, Vertex::v6}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v6}, {Vertex::v0, Vertex::v6}}, {0x1A2, 0x37B, 0x459},
+                {{Vertex::v3, Vertex::v6}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v6}, {Vertex::v0, Vertex::v6}}, {0x1A2, 0x67B, 0x459},
             },
             // case 7.2
             {
