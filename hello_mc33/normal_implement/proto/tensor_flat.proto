@@ -1,0 +1,8 @@
+syntax = "proto3";
+
+message Tensor3DFlat {
+    repeated double values = 1;
+    int32 dim_x = 2;
+    int32 dim_y = 3;
+    int32 dim_z = 4;
+};

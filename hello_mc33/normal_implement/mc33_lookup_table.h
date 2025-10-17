@@ -41,4 +41,6 @@ bool vertex_interpolation_connected(const std::vector<double>& signed_distance, 
 
 void init_tables();
 
+bool equal(const unsigned short& edges1, const unsigned short& edges2);
+
 #endif

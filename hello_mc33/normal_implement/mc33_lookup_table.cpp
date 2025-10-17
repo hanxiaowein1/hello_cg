@@ -7,6 +7,9 @@
 #include <stdexcept>
 #include "mc33_global_test.h"
 #include <format>
+
+bool g_mc33_table_initialized = false;
+using mc33_table_type = decltype(MC33_TABLES);
 /**
  * @brief first level deside big case, second level deside divided case
  * first level key is distance_sign, second level is connected vertices of ambiguous
@@ -170,13 +173,16 @@ std::unordered_map<
                 {0x20A, 0x09A, 0x68B, 0x648}
             },
             // case 10.1.2
+            // TODO: interesting problem, when two diagonal points in the same face are connected by interpolation, so the correspond diagonal points in the cube is also connected by interpolation(this is definite, because in the range [0, 1], the boundary is connected, so the diagonal points in the cube is also connected), so in the future, I should simplify the list of connected points, such as simplify those connected points that can be duduced by other connection.
             {
-                {{Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v2}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
+                // {{Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v2}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
+                {{Vertex::v3, Vertex::v5}, {Vertex::v3, Vertex::v6}, {Vertex::v0, Vertex::v6}, {Vertex::v0, Vertex::v5}, {Vertex::v7, Vertex::v1}, {Vertex::v4, Vertex::v2}},
                 {0xB6A, 0x2BA, 0x20B, 0xB08, 0x048, 0x409, 0x64A, 0x49A}
             },
             // case 10.2
             {
-                {{Vertex::v0, Vertex::v5}, {Vertex::v1, Vertex::v4}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
+                // {{Vertex::v0, Vertex::v5}, {Vertex::v1, Vertex::v4}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
+                {{Vertex::v3, Vertex::v6}, {Vertex::v1, Vertex::v4}, {Vertex::v7, Vertex::v1}, {Vertex::v4, Vertex::v2}, {Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v6}},
                 {0xCA2, 0xC9A, 0xC49, 0xC64, 0xCB6, 0xC8B, 0xC08}
             }
         }
@@ -265,6 +271,22 @@ std::unordered_map<
         }
     }
 };
+
+std::ostream& operator<<(std::ostream& os, const std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>& vertices)
+{
+    os << "{";
+    for(const auto& vertice: vertices)
+    {
+        os << "{";
+        for(const auto& vertex: vertice)
+        {
+            os << to_string(vertex) << ",";
+        }
+        os << "}, ";
+    }
+    os << "}";
+    return os;
+}
 
 std::unordered_map<Vertex, std::unordered_set<Vertex>> VERTEX_NEIGHBOOR = {
     {Vertex::v0, {Vertex::v1, Vertex::v3, Vertex::v4}},
@@ -471,6 +493,218 @@ std::unordered_map<Vertex, Vertex> VERTEX_Z_ROTATE = {
     {Vertex::vc2, Vertex::vc2},
 };
 
+static std::unordered_map<Vertex, Vertex> VERTEX_UP_DOWN_FLIP = {
+    {Vertex::v0, Vertex::v3},
+    {Vertex::v1, Vertex::v2},
+    {Vertex::v2, Vertex::v1},
+    {Vertex::v3, Vertex::v0},
+    {Vertex::v4, Vertex::v7},
+    {Vertex::v5, Vertex::v6},
+    {Vertex::v6, Vertex::v5},
+    {Vertex::v7, Vertex::v4},
+};
+static std::unordered_map<Vertex, Vertex> VERTEX_LEFT_RIGHT_FLIP = {
+    {Vertex::v0, Vertex::v1},
+    {Vertex::v1, Vertex::v0},
+    {Vertex::v2, Vertex::v3},
+    {Vertex::v3, Vertex::v2},
+    {Vertex::v4, Vertex::v5},
+    {Vertex::v5, Vertex::v4},
+    {Vertex::v6, Vertex::v7},
+    {Vertex::v7, Vertex::v6},
+};
+static std::unordered_map<Vertex, Vertex> VERTEX_FRONT_BACK_FLIP = {
+    {Vertex::v0, Vertex::v4},
+    {Vertex::v1, Vertex::v5},
+    {Vertex::v2, Vertex::v6},
+    {Vertex::v3, Vertex::v7},
+    {Vertex::v4, Vertex::v0},
+    {Vertex::v5, Vertex::v1},
+    {Vertex::v6, Vertex::v2},
+    {Vertex::v7, Vertex::v3},
+};
+
+
+static std::unordered_map<Edge, Edge> EDGE_UP_DOWN_FLIP = {
+    {Edge::e0, Edge::e2},
+    {Edge::e1, Edge::e1},
+    {Edge::e2, Edge::e0},
+    {Edge::e3, Edge::e3},
+    {Edge::e4, Edge::e6},
+    {Edge::e5, Edge::e5},
+    {Edge::e6, Edge::e4},
+    {Edge::e7, Edge::e7},
+    {Edge::e8, Edge::e11},
+    {Edge::e9, Edge::e10},
+    {Edge::e10, Edge::e9},
+    {Edge::e11, Edge::e8},
+    {Edge::ec, Edge::ec},
+};
+static std::unordered_map<Edge, Edge> EDGE_LEFT_RIGHT_FLIP = {
+    {Edge::e0, Edge::e0},
+    {Edge::e1, Edge::e3},
+    {Edge::e2, Edge::e2},
+    {Edge::e3, Edge::e1},
+    {Edge::e4, Edge::e4},
+    {Edge::e5, Edge::e7},
+    {Edge::e6, Edge::e6},
+    {Edge::e7, Edge::e5},
+    {Edge::e8, Edge::e9},
+    {Edge::e9, Edge::e8},
+    {Edge::e10, Edge::e11},
+    {Edge::e11, Edge::e10},
+    {Edge::ec, Edge::ec},
+};
+static std::unordered_map<Edge, Edge> EDGE_FRONT_BACK_FLIP = {
+    {Edge::e0, Edge::e4},
+    {Edge::e1, Edge::e5},
+    {Edge::e2, Edge::e6},
+    {Edge::e3, Edge::e7},
+    {Edge::e4, Edge::e0},
+    {Edge::e5, Edge::e1},
+    {Edge::e6, Edge::e2},
+    {Edge::e7, Edge::e3},
+    {Edge::e8, Edge::e8},
+    {Edge::e9, Edge::e9},
+    {Edge::e10, Edge::e10},
+    {Edge::e11, Edge::e11},
+    {Edge::ec, Edge::ec},
+};
+
+
+std::bitset<8> flip_vertex(const std::bitset<8>& distance_signs, FlipDir flip_dir)
+{
+    std::bitset<8> flipped_distance_signs;
+    auto lambda = [&](std::unordered_map<Vertex, Vertex> vertex_flip_map){
+        for(const auto& pair: vertex_flip_map)
+        {
+            flipped_distance_signs[static_cast<int>(pair.first)] = distance_signs[static_cast<int>(pair.second)];
+        }
+    };
+
+    switch (flip_dir)
+    {
+    case FlipDir::ud:
+        lambda(VERTEX_UP_DOWN_FLIP);
+        break;
+    case FlipDir::lr:
+        lambda(VERTEX_LEFT_RIGHT_FLIP);
+        break;
+    case FlipDir::fb:
+        lambda(VERTEX_FRONT_BACK_FLIP);
+        break;
+    default:
+        break;
+    }
+
+    return flipped_distance_signs;
+}
+
+Edge flip_edge(const Edge& edge, const FlipDir& flip_dir)
+{
+    switch (flip_dir)
+    {
+    case FlipDir::ud:
+        return EDGE_UP_DOWN_FLIP.at(edge);
+    case FlipDir::lr:
+        return EDGE_LEFT_RIGHT_FLIP.at(edge);
+    case FlipDir::fb:
+        return EDGE_FRONT_BACK_FLIP.at(edge);
+    default:
+        throw std::invalid_argument("unknown flip direction!");
+    }
+}
+
+unsigned short flip_edge(const unsigned short& edges, const FlipDir& flip_dir)
+{
+    unsigned short flipped_edges = 0x0000;
+    auto _edges = edges;
+    // NOTE: take care! sequence need to be reverse too! You can take an example of vertex0 is negative and other vertices are positive, and flip it in left-right direction
+    for(int i = 0; i < 3; i++)
+    {
+        _edges = _edges >> (i == 0 ? 0 : 4);
+        auto edge = _edges & 0xF;
+        Edge flipped_edge;
+        flipped_edge = flip_edge(static_cast<Edge>(edge), flip_dir);
+        flipped_edges = flipped_edges << 4;
+        flipped_edges = flipped_edges | static_cast<unsigned short>(flipped_edge);
+    }
+    return flipped_edges;
+}
+
+std::vector<unsigned short> flip_edge(const std::vector<unsigned short>& edgess, const FlipDir& flip_dir)
+{
+    std::vector<unsigned short> flipped_edgess;
+    for(const auto& edges: edgess)
+    {
+        auto flipped_edges = flip_edge(edges, flip_dir);
+        flipped_edgess.emplace_back(flipped_edges);
+    }
+    return flipped_edgess;
+}
+
+/**
+ * @brief reverse the sequence of the index of edge.
+ * 
+ * @param triangle: sample, 0x678
+ * @return unsigned short: reversed triangle
+ */
+unsigned short reverse_triangle(const unsigned short& triangle)
+{
+    unsigned short reversed_triangle = 0x0000;
+    for(int i = 0; i < 3; i++)
+    {
+        auto index = (triangle >> 4 * i) & 0x000F;
+        reversed_triangle = (reversed_triangle << 4) | index;
+    }
+    return reversed_triangle;
+}
+
+bool equal(const unsigned short& edges1, const unsigned short& edges2)
+{
+    while(true)
+    {
+        Edge edge1_0 = static_cast<Edge>(edges1 & 0xF);
+        int i = 0;
+        while(true)
+        {
+            Edge edge2_0 = static_cast<Edge>(edges2 >> (4 * i) & 0xF);
+            if(edge1_0 == edge2_0)
+            {
+                // compare the other two edge sequence(from back to front) and value
+                Edge edge1_1 = static_cast<Edge>((edges1 >> 4) & 0xF);
+                Edge edge1_2 = static_cast<Edge>((edges1 >> 8) & 0xF);
+                Edge edge2_1, edge2_2;
+                if(i == 0)
+                {
+                    edge2_1 = static_cast<Edge>((edges2 >> 4) & 0xF);
+                    edge2_2 = static_cast<Edge>((edges2 >> 8) & 0xF);
+                }
+                if(i == 1)
+                {
+                    edge2_1 = static_cast<Edge>((edges2 >> 8) & 0xF);
+                    edge2_2 = static_cast<Edge>(edges2 & 0xF);
+                }
+                if(i == 2)
+                {
+                    edge2_1 = static_cast<Edge>(edges2 & 0xF);
+                    edge2_2 = static_cast<Edge>((edges2 >> 4) & 0xF);
+                }
+                if(edge1_1 == edge2_1 && edge1_2 == edge2_2)
+                {
+                    return true;
+                }
+                return false;
+            }
+            i++;
+        }
+        if(i == 3)
+        {
+            return false;
+        }
+    }
+    return true;
+}
 
 bool vertex_in_top_face(const Vertex& vertex)
 {
@@ -776,8 +1010,150 @@ std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Ve
     return rotated_verticess;
 }
 
+void flip_tables(mc33_table_type& to_do_tables)
+{
+    // there are 8 situations,up-down flip(0, 1), left-right flip(0, 1), front-back flip(0, 1)
+    std::vector<std::tuple<bool, bool, bool>> flip_situations{
+        {false, false, false},
+        {false, false, true},
+        {false, true, false},
+        {false, true, true},
+        {true, false, false},
+        {true, false, true},
+        {true, true, false},
+        {true, true, true}
+    };
+    auto lambda = [](const decltype(MC33_TABLES)::mapped_type& sub_cases, const FlipDir& flip_dir) -> decltype(MC33_TABLES)::mapped_type {
+        decltype(MC33_TABLES)::mapped_type flipped_sub_cases;
+        for(const auto& [connected_vertices, triangles]: sub_cases)
+        {
+            std::remove_const_t<decltype(connected_vertices)> flipped_connected_vertices;
+            // TODO: figure out why this won't work
+            /*decltype(sub_cases)::key_type flipped_connected_vertices;*/
+            std::remove_const_t<decltype(triangles)> flipped_triangles;
+            flipped_triangles = flip_edge(triangles, flip_dir);
+            for(auto connected_vertice: connected_vertices)
+            {
+                decltype(connected_vertice) flipped_connected_vertice;
+                for(auto vertex: connected_vertice)
+                {
+                    Vertex flipped_vertex;
+                    // flip vertex
+                    switch (flip_dir)
+                    {
+                    case FlipDir::ud:
+                        flipped_vertex = VERTEX_UP_DOWN_FLIP.at(vertex);
+                        break;
+                    case FlipDir::lr:
+                        flipped_vertex = VERTEX_LEFT_RIGHT_FLIP.at(vertex);
+                        break;
+                    case FlipDir::fb:
+                        flipped_vertex = VERTEX_FRONT_BACK_FLIP.at(vertex);
+                        break;
+                    default:
+                        break;
+                    }
+                    flipped_connected_vertice.emplace(flipped_vertex);
+                }
+                // NOTE: I staggered in this line for 1 hours, it's not because the problem of the type or hash function, it's the reason that once define the flipped_connected_vertices variable by decltype(connected_vertices), which is const and cannot be modified...
+                flipped_connected_vertices.emplace(flipped_connected_vertice);
+            }
+            flipped_sub_cases.emplace(std::make_pair(flipped_connected_vertices, flipped_triangles));
+        }
+        return flipped_sub_cases;
+    };
+    decltype(MC33_TABLES) flipped_tables;
+    for(const auto& [distance_signs, sub_cases]: to_do_tables)
+    {
+        for(const auto& flip_situation: flip_situations)
+        {
+            auto flipped_distance_signs = distance_signs;
+            auto flipped_sub_cases = sub_cases;
+            auto [ud_flip, lr_flip, fb_flip] = flip_situation;
+            if(ud_flip)
+            {
+                // do up-down flip
+                flipped_distance_signs = flip_vertex(flipped_distance_signs, FlipDir::ud);
+                flipped_sub_cases = lambda(flipped_sub_cases, FlipDir::ud);
+            }
+            if(lr_flip)
+            {
+                // do left-right flip
+                flipped_distance_signs = flip_vertex(flipped_distance_signs, FlipDir::lr);
+                flipped_sub_cases = lambda(flipped_sub_cases, FlipDir::lr);
+            }
+            if(fb_flip)
+            {
+                // do front-back flip
+                flipped_distance_signs = flip_vertex(flipped_distance_signs, FlipDir::fb);
+                flipped_sub_cases = lambda(flipped_sub_cases, FlipDir::fb);
+            }
+            // insert new cases into mc33 table
+            if(flipped_tables.contains(flipped_distance_signs))
+            {
+                flipped_tables[flipped_distance_signs].insert(flipped_sub_cases.begin(), flipped_sub_cases.end());
+            }
+            else
+            {
+                flipped_tables[flipped_distance_signs] = flipped_sub_cases;
+            }
+        }
+    }
+    // merge flipped tables and to_do_tables
+    for (const auto& [distance_signs, sub_cases] : flipped_tables)
+    {
+        if (to_do_tables.contains(distance_signs))
+        {
+            to_do_tables[distance_signs].insert(sub_cases.begin(), sub_cases.end());
+        }
+        else
+        {
+            to_do_tables[distance_signs] = sub_cases;
+        }
+    }
+}
+
+void invert_tables(mc33_table_type& to_do_tables)
+{
+    decltype(MC33_TABLES) inverted_tables;
+    for(const auto& [distance_signs, sub_cases]: to_do_tables)
+    {
+        auto inverted_distances_signs = distance_signs;
+        inverted_distances_signs.flip();
+        decltype(MC33_TABLES)::mapped_type inverted_sub_cases;
+        for(const auto& [connected_vertices, triangles]: sub_cases)
+        {
+            std::remove_const_t<decltype(triangles)> inverted_triangles;
+            for(const auto& triangle: triangles)
+            {
+                auto inverted_triangle = reverse_triangle(triangle);
+                inverted_triangles.emplace_back(inverted_triangle);
+            }
+            inverted_sub_cases[connected_vertices] = inverted_triangles;
+        }
+        inverted_tables[inverted_distances_signs] = inverted_sub_cases;
+    }
+    // merge inverted_tables and to_do_tables
+    for(const auto& [distance_signs, sub_cases]: inverted_tables)
+    {
+        if(to_do_tables.contains(distance_signs))
+        {
+            to_do_tables[distance_signs].insert(sub_cases.begin(), sub_cases.end());
+        }
+        else
+        {
+            to_do_tables[distance_signs] = sub_cases;
+        }
+    }
+}
+
 void init_tables()
 {
+    if(g_mc33_table_initialized == true)
+    {
+        return;
+    }
+    g_mc33_table_initialized = true;
     // rotate table
     std::unordered_map<
         std::bitset<8>,
@@ -840,23 +1216,30 @@ void init_tables()
     MC33_TABLES.insert(rotated_tables.begin(), rotated_tables.end());
     std::cout << "after rotate, mc33 table size is: " << MC33_TABLES.size() << std::endl;
 
-    // invert distance signs
-    std::unordered_map<
-        std::bitset<8>,
-        std::unordered_map<
-            std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>,
-            std::vector<unsigned short>,
-            boost::hash<std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>>
-        >
-    > invert_table;
-    for(auto [key, value]: MC33_TABLES)
-    {
-        auto origin = key;
-        origin.flip();
-        invert_table.emplace(std::make_pair(origin, value));
-    }
+    flip_tables(MC33_TABLES);
 
-    MC33_TABLES.insert(invert_table.begin(), invert_table.end());
+    // TODO: pure rotate is not enough, the sign distance may be already 256, but the inner mesh need to be expanded
+
+    // invert distance signs
+    // TODO: there must be a bug, when invert signs, the edge direction also need to be altered, because the face direction has been changed
+    // std::unordered_map<
+    //     std::bitset<8>,
+    //     std::unordered_map<
+    //         std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>,
+    //         std::vector<unsigned short>,
+    //         boost::hash<std::unordered_set<std::unordered_set<Vertex>, boost::hash<std::unordered_set<Vertex>>>>
+    //     >
+    // > invert_table;
+    // for(auto [key, value]: MC33_TABLES)
+    // {
+    //     auto origin = key;
+    //     origin.flip();
+    //     invert_table.emplace(std::make_pair(origin, value));
+    // }
+
+    // MC33_TABLES.insert(invert_table.begin(), invert_table.end());
+
+    invert_tables(MC33_TABLES);
 
     std::cout << "after invert, mc33 table size is: " << MC33_TABLES.size() << std::endl;
 }
@@ -889,6 +1272,21 @@ void print_mc33_table()
         std::cout << "}," << std::endl;
     }
 }
+
+namespace
+{
+class InitMC33Table
+{
+public:
+    InitMC33Table()
+    {
+        ::init_tables();
+    }
+    ~InitMC33Table() = default;
+};
+}
+
+static InitMC33Table g_init_mc33_table;
 
 TEST(GlobalTest, init_tables)
 {
@@ -1054,4 +1452,377 @@ TEST(GlobalTest, has_value_bigger_than_zero_in_interval)
         auto result = has_value_bigger_than_zero_in_interval(a, b, c, start, end);
         ASSERT_EQ(result, true);
     }
+}
+
+TEST(GlobalTest, flip_vertex_map)
+{
+    // function to test if the flipped vertex of a flipped vertex is vertex
+    auto lambda = [](const decltype(VERTEX_FRONT_BACK_FLIP)& flip_table) -> bool {
+        for(const auto& [vertex, flipped_vertex]: flip_table)
+        {
+            if(flip_table.contains(flipped_vertex))
+            {
+                if(flip_table.at(flipped_vertex) != vertex)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // up-down
+    ASSERT_EQ(true, lambda(VERTEX_UP_DOWN_FLIP));
+    // left-right
+    ASSERT_EQ(true, lambda(VERTEX_LEFT_RIGHT_FLIP));
+    // front-back
+    ASSERT_EQ(true, lambda(VERTEX_FRONT_BACK_FLIP));
+}
+
+TEST(GlobalTest, flip_vertex)
+{
+    std::bitset<8> distance_signs{0b10110010};
+
+    // up-down flip test
+    {
+        auto flipped_distance_signs = flip_vertex(distance_signs, FlipDir::ud);
+        ASSERT_EQ(flipped_distance_signs, std::bitset<8>(0b11010100));
+    }
+    // left-right flip test
+    {
+        auto flipped_distance_signs = flip_vertex(distance_signs, FlipDir::lr);
+        ASSERT_EQ(flipped_distance_signs, std::bitset<8>(0b01110001));
+    }
+    // front-back flip test
+    {
+        auto flipped_distance_signs = flip_vertex(distance_signs, FlipDir::fb);
+        ASSERT_EQ(flipped_distance_signs, std::bitset<8>(0b00101011));
+    }
+}
+
+TEST(GlobalTest, flip_edge_map)
+{
+    // the flip of the flipped edge is edge
+    auto lambda = [](const decltype(EDGE_LEFT_RIGHT_FLIP) flip_table) -> bool {
+        for(const auto& [edge, flipped_edge]: flip_table)
+        {
+            if(flip_table.contains(flipped_edge))
+            {
+                if(flip_table.at(flipped_edge) != edge)
+                {
+                    return false;
+                }
+            }
+            else
+            {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    // up-down
+    ASSERT_EQ(true, lambda(EDGE_UP_DOWN_FLIP));
+    // left-right
+    ASSERT_EQ(true, lambda(EDGE_LEFT_RIGHT_FLIP));
+    // front-back
+    ASSERT_EQ(true, lambda(EDGE_FRONT_BACK_FLIP));
+}
+
+// TODO: I can use a macro to better name the unit test, like DEFINE_TEST(func, type1, type2, xxx)
+// NOTE: next time if I want to do some improvement, I should not move to it directly because my main mission is not finished yet. I should mark it as TODO and after I finish the main mission, I can take a review and do it later when I have free time(Or stagger in the main mission and want to change a topic to relax, after all, study new knowledge is really relaxing).
+TEST(GlobalTest, flip_edge_const_Edge_const_FlipDir)
+{
+    // test up-down
+    {
+        Edge edge = Edge::e0;
+        FlipDir flip_dir = FlipDir::ud;
+        auto flipped_edge = flip_edge(edge, flip_dir);
+        ASSERT_EQ(Edge::e2, flipped_edge);
+    }
+    // test left-right
+    {
+        Edge edge = Edge::e0;
+        FlipDir flip_dir = FlipDir::lr;
+        auto flipped_edge = flip_edge(edge, flip_dir);
+        ASSERT_EQ(Edge::e0, flipped_edge);
+    }
+    // test front-back
+    {
+        Edge edge = Edge::e0;
+        FlipDir flip_dir = FlipDir::fb;
+        auto flipped_edge = flip_edge(edge, flip_dir);
+        ASSERT_EQ(Edge::e4, flipped_edge);
+    }
+}
+
+// TODO: I have a new idea, create a template or macro define, pass function pointer and parameter to it, it can directly generate unit test by the funciton name and parameter type, like DEFINE_UNIT_TEST(func1, type1, type2, ...)
+TEST(GlobalTest, flip_edge_const_unsigned_short_const_FlipDir)
+{
+    // up-down
+    {
+        unsigned short edges = 0x0038;
+        FlipDir flip_dir = FlipDir::ud;
+        auto flipped_edges = flip_edge(edges, flip_dir);
+        ASSERT_EQ(flipped_edges, 0x0B32);
+    }
+    // left-right
+    {
+        unsigned short edges = 0x0038;
+        FlipDir flip_dir = FlipDir::lr;
+        auto flipped_edges = flip_edge(edges, flip_dir);
+        ASSERT_EQ(flipped_edges, 0x0910);
+    }
+    // front-back
+    {
+        unsigned short edges = 0x0038;
+        FlipDir flip_dir = FlipDir::fb;
+        auto flipped_edges = flip_edge(edges, flip_dir);
+        ASSERT_EQ(flipped_edges, 0x0874);
+    }
+}
+
+TEST(GlobalTest, flip_edge_const_vector_unsigned_short_const_FlipDir)
+{
+    // up-down
+    {
+        std::vector<unsigned short> edgess{0x0038, 0x0C49};
+        FlipDir flip_dir = FlipDir::ud;
+        auto flipped_edgess = flip_edge(edgess, flip_dir);
+        decltype(flipped_edgess) expected_flipped_edgess{0x0B32, 0x0A6C};
+        ASSERT_EQ(edgess.size(), flipped_edgess.size());
+        for(int i = 0; i < edgess.size(); i++)
+        {
+            auto flipped_edges = flipped_edgess[i];
+            auto expected_flipped_edges = expected_flipped_edgess[i];
+            ASSERT_EQ(flipped_edges, expected_flipped_edges) << std::format("the {} flipped edges is not same with the expected flipped edges", i) << std::endl;
+        }
+    }
+    // left-right
+    {
+        std::vector<unsigned short> edgess{0x0038, 0x0C49};
+        FlipDir flip_dir = FlipDir::lr;
+        auto flipped_edgess = flip_edge(edgess, flip_dir);
+        decltype(flipped_edgess) expected_flipped_edgess{ 0x0910, 0x084C};
+        ASSERT_EQ(edgess.size(), flipped_edgess.size());
+        for(int i = 0; i < edgess.size(); i++)
+        {
+            auto flipped_edges = flipped_edgess[i];
+            auto expected_flipped_edges = expected_flipped_edgess[i];
+            ASSERT_EQ(flipped_edges, expected_flipped_edges) << std::format("the {} flipped edges is not same with the expected flipped edges", i) << std::endl;
+        }
+    }
+    // front-back
+    {
+        std::vector<unsigned short> edgess{0x0038, 0x0C49};
+        FlipDir flip_dir = FlipDir::fb;
+        auto flipped_edgess = flip_edge(edgess, flip_dir);
+        decltype(flipped_edgess) expected_flipped_edgess{ 0x0874, 0x090C};
+        ASSERT_EQ(edgess.size(), flipped_edgess.size());
+        for(int i = 0; i < edgess.size(); i++)
+        {
+            auto flipped_edges = flipped_edgess[i];
+            auto expected_flipped_edges = expected_flipped_edgess[i];
+            ASSERT_EQ(flipped_edges, expected_flipped_edges) << std::format("the {} flipped edges is not same with the expected flipped edges", i) << std::endl;
+        }
+    }
+}
+
+TEST(GlobalTest, flip_tables)
+{
+    decltype(MC33_TABLES) tables;
+    tables[std::bitset<8>(0b10101111)] = {
+        {
+            {{Vertex::v5, Vertex::v7}},
+            {0x487, 0x56A},
+        }
+    };
+    flip_tables(tables);
+    //ASSERT_EQ(tables.size(), 8);
+    decltype(MC33_TABLES) expected_tables = {
+        {
+            0b10101111,
+            {
+                {
+                    {{Vertex::v5, Vertex::v7}},
+                    {0x487, 0x56A},
+                }
+            }
+        },
+        {
+            0b11111010,
+            {
+                {
+                    {{Vertex::v1, Vertex::v3}},
+                    {0x0380, 0x0A21},
+                }
+            }
+        },
+        {
+            0b01011111,
+            {
+                {
+                    {{Vertex::v4, Vertex::v6}},
+                    {0x594, 0x0B67},
+                }
+            }
+        },
+        {
+            0b11110101,
+            {
+                {
+                    {{Vertex::v0, Vertex::v2}},
+                    {0x0091, 0x032B},
+                }
+            }
+        },
+        // NOTE: interesting, when there are only one negative vertex, the flipped table's size is 8, when there are two of them, the size turns to 4, because half of them are duplicate
+        // {
+        //     0b01011111,
+        //     {
+        //         {
+        //             {{Vertex::v6, Vertex::v4}},
+        //             {0x07B6, 0x0945},
+        //         }
+        //     }
+        // },
+        // {
+        //     0b11110101,
+        //     {
+        //         {
+        //             {{Vertex::v2, Vertex::v0}},
+        //             {0x02B3, 0x0109},
+        //         }
+        //     }
+        // },
+        // {
+        //     0b10101111,
+        //     {
+        //         {
+        //             {{Vertex::v7, Vertex::v5}},
+        //             {0x06A5, 0x0847},
+        //         }
+        //     }
+        // },
+        // {
+        //     0b11111010,
+        //     {
+        //         {
+        //             {{Vertex::v1, Vertex::v3}},
+        //             {0x01A2, 0x0803},
+        //         }
+        //     }
+        // },
+    };
+    // check if the size is same
+    ASSERT_EQ(tables.size(), expected_tables.size());
+    for(const auto& [distance_signs, sub_cases]: tables)
+    {
+        if(!expected_tables.contains(distance_signs))
+        {
+            FAIL() << std::format("there no distance sign {} in expected result", distance_signs.to_string());
+        }
+        else
+        {
+            // check if sub cases size is the same
+            ASSERT_EQ(expected_tables[distance_signs].size(), sub_cases.size());
+            // check if the inner content are equal
+            for(const auto& [connected_vertices, triangles]: sub_cases)
+            {
+                if(!expected_tables[distance_signs].contains(connected_vertices))
+                {
+                    FAIL() << "there are no same connected vertices in expected tables which are:" << connected_vertices << std::endl;
+                }
+                else
+                {
+                    // check if the inner triangles are equal
+                    auto expected_triangles = expected_tables[distance_signs][connected_vertices];
+                    ASSERT_EQ(triangles.size(), expected_triangles.size());
+                    for(int i = 0; i < triangles.size(); i++)
+                    {
+                        ASSERT_EQ(true, equal(triangles[i], expected_triangles[i])) << std::format("in distance sign {}, connected vertices: ", distance_signs.to_string()) << connected_vertices << std::format(", triangles is different! Real triangle is {:#0x}, expected one is {:#0x}", triangles[i], expected_triangles[i]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST(GlobalTest, invert_tables)
+{
+    decltype(MC33_TABLES) tables;
+    tables[std::bitset<8>(0b10101111)] = {
+        {
+            {{Vertex::v5, Vertex::v7}},
+            {0x487, 0x56A},
+        }
+    };
+    invert_tables(tables);
+    ASSERT_EQ(tables.size(), 2);
+    decltype(MC33_TABLES) expected_tables = {
+        {
+            0b10101111,
+            {
+                {
+                    {{Vertex::v5, Vertex::v7}},
+                    {0x487, 0x56A},
+                }
+            }
+        },
+        {
+            0b01010000,
+            {
+                {
+                    {{Vertex::v5, Vertex::v7}},
+                    {0x784, 0xA65},
+                }
+            }
+        },
+    };
+    ASSERT_EQ(tables.size(), expected_tables.size());
+    // TODO: duplicate code, need to be simplifed in the future
+    for(const auto& [distance_signs, sub_cases]: tables)
+    {
+        if(!expected_tables.contains(distance_signs))
+        {
+            FAIL() << std::format("there no distance sign {} in expected result", distance_signs.to_string());
+        }
+        else
+        {
+            // check if sub cases size is the same
+            ASSERT_EQ(expected_tables[distance_signs].size(), sub_cases.size());
+            // check if the inner content are equal
+            for(const auto& [connected_vertices, triangles]: sub_cases)
+            {
+                if(!expected_tables[distance_signs].contains(connected_vertices))
+                {
+                    FAIL() << "there are no same connected vertices in expected tables which are:" << connected_vertices << std::endl;
+                }
+                else
+                {
+                    // check if the inner triangles are equal
+                    auto expected_triangles = expected_tables[distance_signs][connected_vertices];
+                    ASSERT_EQ(triangles.size(), expected_triangles.size());
+                    for(int i = 0; i < triangles.size(); i++)
+                    {
+                        ASSERT_EQ(true, equal(triangles[i], expected_triangles[i])) << std::format("in distance sign {}, connected vertices: ", distance_signs.to_string()) << connected_vertices << std::format(", triangles is different! Real triangle is {:#0x}, expected one is {:#0x}", triangles[i], expected_triangles[i]);
+                    }
+                }
+            }
+        }
+    }
+}
+
+TEST(GlobalTest, equal_triangle)
+{
+    ASSERT_EQ(true, equal(0x123, 0x231));
+    ASSERT_EQ(true, equal(0x123, 0x312));
+
+    ASSERT_EQ(false, equal(0x123, 0x132));
+    ASSERT_EQ(false, equal(0x123, 0x213));
+
 }
