@@ -18,6 +18,40 @@
 #include "signed_distances_iface.h"
 
 
+/**
+ * @brief check if point inside the box
+ * 
+ * @param box 8 point of a box
+ * @param point 1 point
+ * @return true 
+ * @return false 
+ */
+bool inside(const std::vector<Eigen::Vector3d>& box, const Eigen::Vector3d& point)
+{
+    // get the minimum x, y, z
+    if(box.size() != 8)
+    {
+        throw std::exception("box size is not 8! Cannot be used to check if point is inside a box");
+    }
+    auto min_x = box[0].x();
+    auto min_y = box[0].y();
+    auto min_z = box[0].z();
+    auto max_x = box[6].x();
+    auto max_y = box[6].y();
+    auto max_z = box[6].z();
+    if(point.x() > min_x && point.x() < max_x)
+    {
+        if(point.y() > min_y && point.y() < max_y)
+        {
+            if(point.z() > min_z && point.z() < max_z)
+            {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
 double interpolation_formula(const double& coor1, const double& coor2, const double& signed_distance1, const double& signed_distance2)
 {
     double interpolated_coor = coor1 + (coor2 - coor1) * std::abs(signed_distance1) / (std::abs(signed_distance1) + std::abs(signed_distance2));
@@ -394,9 +428,9 @@ TEST(GlobalTest, IGLBunny)
 {
     init_tables();
 
-    int nx = 20;
-    int ny = 20;
-    int nz = 20;
+    int nx = 30;
+    int ny = 30;
+    int nz = 30;
 
     Eigen::MatrixXd V;
     Eigen::MatrixXi F;
@@ -816,5 +850,31 @@ TEST(GlobalTest, get_edgess_const_vector_double_const_unordered_map)
     for(int i = 0; i < triangles.size(); i++)
     {
         ASSERT_EQ(true, equal(triangles[i], expected_triangles[i])) << std::format("triangle is not the expected one at index {}, real output is {:#0x}, expected is {:#0x}", i, triangles[i], expected_triangles[i]);
+    }
+}
+
+TEST(GlobalTest, inside_const_vector_Vector3d_const_Vector3d)
+{
+    std::vector<Eigen::Vector3d> coors = {
+        {1, 1, 1},
+        {1, 2, 1},
+        {1, 2, 2},
+        {1, 1, 2},
+        {2, 1, 1},
+        {2, 2, 1},
+        {2, 2, 2},
+        {2, 1, 2},
+    };
+    {
+        Eigen::Vector3d point = {
+            1.1f, 1.3f, 1.6f
+        };
+        ASSERT_EQ(true, inside(coors, point));
+    }
+    {
+        Eigen::Vector3d point = {
+            1.1f, 1.3f, 2.6f
+        };
+        ASSERT_EQ(false, inside(coors, point));
     }
 }

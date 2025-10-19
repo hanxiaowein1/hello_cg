@@ -206,6 +206,9 @@ std::unordered_map<
             {
                 {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}}, {0x67B, 0x351, 0x385, 0x845}
             },
+            {
+                {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}, {Vertex::v2, Vertex::v4}}, {0x67B, 0x351, 0x385, 0x845}
+            },
             // case 12.1.2
             {
                 {{Vertex::v3, Vertex::v4}, {Vertex::v4, Vertex::v6}, {Vertex::v1, Vertex::v7}},
@@ -218,7 +221,7 @@ std::unordered_map<
             },
             // case 12.3
             {
-                {{Vertex::v4, Vertex::v6}, {Vertex::v2, Vertex::v4}, {Vertex::v0, Vertex::v7}},
+                {{Vertex::v4, Vertex::v6}, {Vertex::v0, Vertex::v7}},
                 {0xC84, 0xC45, 0xC51, 0xC13, 0xC3B, 0xCB6, 0xC67, 0xC78}
             }
         }
