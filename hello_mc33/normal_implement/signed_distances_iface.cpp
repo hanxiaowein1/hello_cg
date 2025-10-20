@@ -4,6 +4,7 @@
 #define NOMINMAX
 #endif
 #include "igl/readOFF.h"
+#include "igl/readOBJ.h"
 #include "igl/signed_distance.h"
 #include "tensor_flat.pb.h"
 #include <format>
@@ -21,12 +22,10 @@ void generate_signed_distance(const int& nx, const int& ny, const int &nz, const
 {
     Eigen::MatrixXd V;
     Eigen::MatrixXi F;
-    std::string off_path = mesh_path;
-    igl::readOFF(off_path, V, F);
+    std::string obj_path = mesh_path;
+    igl::readOBJ(obj_path, V, F);
     Eigen::Vector3d m = V.colwise().minCoeff();
-    std::cout << m << std::endl;
     Eigen::Vector3d M = V.colwise().maxCoeff();
-    std::cout << M << std::endl;
     Eigen::MatrixXd P;
 	P.resize(nx * ny * nz, 3);
 	for(unsigned int k = 0; k < nz; k++)

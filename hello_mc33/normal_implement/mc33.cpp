@@ -379,23 +379,9 @@ void generate_mesh(const int& nx, const int& ny, const int& nz, const Eigen::Vec
                     signed_distances[(k + 1) * ny * nx + j * nx + i + 1],
                 };
 
-                std::bitset<8> distance_symbol;
-                for(auto distance = signed_distance.begin(); distance != signed_distance.end(); distance++)
-                {
-                    int index = std::distance(signed_distance.begin(), distance);
-                    if(*distance - iso_value < 0)
-                    {
-                        distance_symbol.set(index, false);
-                    }
-                    else
-                    {
-                        distance_symbol.set(index, true);
-                    }
-                }
                 std::vector<unsigned short int> edgess;
                 try
                 {
-                    // edgess = MC_TABLES.at(distance_symbol);
                     edgess = get_edgess(signed_distance, MC33_TABLES);
                 }
                 catch (const std::out_of_range& e)
@@ -407,14 +393,17 @@ void generate_mesh(const int& nx, const int& ny, const int& nz, const Eigen::Vec
                 {
                     Eigen::Vector3i triangle;
                     int triangle_edge_count = 0;
+                    unsigned short get_edge_factor = 0xF00;
                     while(triangle_edge_count <= 2)
                     {
-                        auto edge = static_cast<Edge>(edges & 0xF);
-                        auto vertex = get_vertex_by_edge(edge, coors, signed_distance);
-                        vertices.emplace_back(std::move(vertex));
-                        triangle[triangle_edge_count] = vertices.size() - 1;
+                        auto edge = static_cast<Edge>(
+                            (edges & (get_edge_factor >> (triangle_edge_count * 4)))
+                            >>
+                            (4 * (2 - triangle_edge_count))
+                        );
+                        auto vertex_index = get_vertex_by_edge(k, j, i, edge, coors, signed_distance, MC33_CACHE, vertices);
+                        triangle[triangle_edge_count] = vertex_index;
                         triangle_edge_count++;
-                        edges = edges >> 4;
                     }
                     triangles.emplace_back(std::move(triangle));
                 }
@@ -434,8 +423,8 @@ void generate_mesh(const std::string& sd_path, const std::string save_path)
 TEST(GlobalTest, generate_and_serialize_signed_distances)
 {
     std::string pb_save_path = "./signed_distances.pb";
-    std::string off_path = "D:\\Library\\libigl\\build\\_deps\\libigl_tutorial_tata-src\\bunny.off";
-    generate_signed_distance(20, 20, 20, off_path, pb_save_path);
+    std::string obj_path = "D:\\PHD\\Projects\\DevelopApp\\DevelopApp\\model\\Bunny.obj";
+    generate_signed_distance(30, 30, 30, obj_path, pb_save_path);
     ASSERT_EQ(true, std::filesystem::exists(pb_save_path));
     ASSERT_NE(0, std::filesystem::file_size(pb_save_path));
 }
@@ -567,10 +556,7 @@ TEST(GlobalTest, IGLBunny)
                         );
                         auto vertex_index = get_vertex_by_edge(k, j, i, edge, coors, signed_distance, MC33_CACHE, vertices);
                         triangle[triangle_edge_count] = vertex_index;
-                        // auto vertex = get_vertex_by_edge(edge, coors, signed_distance);
-                        // vertices.emplace_back(std::move(vertex));
                         triangle_edge_count++;
-                        // edges = edges >> 4;
                     }
                     triangles.emplace_back(std::move(triangle));
                 }
