@@ -71,6 +71,7 @@ if(BUILD_MC33_UNIT_TEST)
         mc33_lookup_table.cpp
         signed_distances_iface.cpp
         charles_mc33_type.cpp
+        mc33_cache.cpp
         ${PROTO_CC_FILES}
     )
     target_link_libraries(tests GTest::gtest GTest::gmock)

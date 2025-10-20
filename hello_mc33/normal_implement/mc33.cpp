@@ -16,7 +16,9 @@
 #include "mc33_lookup_table.h"
 #include "mc33_global_test.h"
 #include "signed_distances_iface.h"
+#include "mc33_cache.h"
 
+MC33Cache<int> MC33_CACHE;
 
 /**
  * @brief check if point inside the box
@@ -93,11 +95,6 @@ double interpolate_between_four_edges(
         auto vertices = EDGE_VERTEX.at(edge);
         auto first_point = *(vertices.begin());
         auto second_point = *(++vertices.begin());
-        //double t = 0.5f;
-        //if (signed_distance[static_cast<int>(first_point)] != signed_distance[static_cast<int>(second_point)])
-        //{
-        //    t = signed_distance[static_cast<int>(first_point)] / (signed_distance[static_cast<int>(first_point)] - signed_distance[static_cast<int>(second_point)]);
-        //}
         auto first_point_index = static_cast<int>(first_point);
         auto first_point_distance = signed_distance[first_point_index];
         auto second_point_index = static_cast<int>(second_point);
@@ -106,21 +103,17 @@ double interpolate_between_four_edges(
         switch(axis)
         {
             case Axis::x:
-                //edges_interpolation[index] = coors[static_cast<int>(first_point)].x() + t * std::abs(coors[static_cast<int>(first_point)].x() - coors[static_cast<int>(second_point)].x());
                 edges_interpolation[index] = formula(coors[first_point_index].x(), coors[second_point_index].x(), first_point_distance, second_point_distance);
                 break;
             case Axis::y:
-                //edges_interpolation[index] = coors[static_cast<int>(first_point)].y() + t * std::abs(coors[static_cast<int>(first_point)].y() - coors[static_cast<int>(second_point)].y());
                 edges_interpolation[index] = formula(coors[first_point_index].y(), coors[second_point_index].y(), first_point_distance, second_point_distance);
                 break;
             case Axis::z:
-                //edges_interpolation[index] = coors[static_cast<int>(first_point)].z() + t * std::abs(coors[static_cast<int>(first_point)].z() - coors[static_cast<int>(second_point)].z());
                 edges_interpolation[index] = formula(coors[first_point_index].z(), coors[second_point_index].z(), first_point_distance, second_point_distance);
                 break;
             default:
                 throw std::invalid_argument("invalid argument!");
         }
-        // edges_interpolation[index] = coors[static_cast<int>(first_point)].x() + t * std::abs(coors[static_cast<int>(first_point)].x() - coors[static_cast<int>(second_point)].x());
     }
     interpolation_axis = std::accumulate(edges_interpolation.begin(), edges_interpolation.end(), 0.0f) / edges_interpolation.size();
 
@@ -162,35 +155,28 @@ Eigen::Vector3d get_vertex(
     auto p2_i = static_cast<int>(second_point);
     auto p2_c = coors[p2_i];
     auto sd2 = signed_distance[p2_i];
-    // double t = signed_distance[static_cast<int>(first_point)] / (signed_distance[static_cast<int>(first_point)] - signed_distance[static_cast<int>(second_point)]);
     if(on_x)
     {
-        // vertex[0] = coors[static_cast<int>(first_point)].x() + t * std::abs(coors[static_cast<int>(first_point)].x() - coors[static_cast<int>(second_point)].x());
         vertex[0] = interpolation_formula(p1_c.x(), p2_c.x(), sd1, sd2);
     }
     else
     {
-        // vertex[0] = coors[static_cast<int>(first_point)].x();
         vertex[0] = p1_c.x();
     }
     if(on_y)
     {
-        // vertex[1] = coors[static_cast<int>(first_point)].y() + t * std::abs(coors[static_cast<int>(first_point)].y() - coors[static_cast<int>(second_point)].y());
         vertex[1] = interpolation_formula(p1_c.y(), p2_c.y(), sd1, sd2);
     }
     else
     {
-        // vertex[1] = coors[static_cast<int>(first_point)].y();
         vertex[1] = p1_c.y();
     }
     if(on_z)
     {
-        // vertex[2] = coors[static_cast<int>(first_point)].z() + t * std::abs(coors[static_cast<int>(first_point)].z() - coors[static_cast<int>(second_point)].z());
         vertex[2] = interpolation_formula(p1_c.z(), p2_c.z(), sd1, sd2);
     }
     else
     {
-        // vertex[2] = coors[static_cast<int>(first_point)].z();
         vertex[2] = p1_c.z();
     }
     return vertex;
@@ -262,6 +248,45 @@ Eigen::Vector3d get_vertex_by_edge(
         // break;
     }
     return vertex;
+}
+
+/**
+ * @brief get triangle index from vertices
+ * 1. check it in the cache or not
+ * 2. if the edge value does not exist in cache, then generate a new interpolation vertex, and append it into cache and vertice
+ * 3. if the edge value exists in cache, then return its index
+ * 
+ * @param z: cube minimum z
+ * @param y: cube minimum y
+ * @param x: cube minimum x
+ * @param edge: the edge that you want to get an interpolation vertex from
+ * @param coors: the 8 vertice coordinates of cube
+ * @param signed_distance: the 8 vertice signed distance of cube
+ * @param cache: the cache that stores interpolated vertice index in vertice
+ * @param vertices: stores all interpolated vertice
+ * @return int: vertex index in array vertice
+ */
+int get_vertex_by_edge(
+    int z, int y, int x,
+    Edge edge,
+    const std::vector<Eigen::Vector3d>& coors,
+    const std::vector<double>& signed_distance,
+    decltype(MC33_CACHE)& cache,
+    std::vector<Eigen::Vector3d>& vertice
+)
+{
+    try
+    {
+        auto index = cache.get({z, y, x, edge});
+        return index;
+    }
+    catch(const std::out_of_range& e)
+    {
+        Eigen::Vector3d vertex = ::get_vertex_by_edge(edge, coors, signed_distance);
+        vertice.emplace_back(vertex);
+        cache.set({z, y, x, edge}, vertice.size() - 1);
+        return vertice.size() - 1;
+    }
 }
 
 std::vector<unsigned short> get_edgess(const std::vector<double>& signed_distances, const decltype(MC33_TABLES)& tables)
@@ -540,9 +565,10 @@ TEST(GlobalTest, IGLBunny)
                             >>
                             (4 * (2 - triangle_edge_count))
                         );
-                        auto vertex = get_vertex_by_edge(edge, coors, signed_distance);
-                        vertices.emplace_back(std::move(vertex));
-                        triangle[triangle_edge_count] = vertices.size() - 1;
+                        auto vertex_index = get_vertex_by_edge(k, j, i, edge, coors, signed_distance, MC33_CACHE, vertices);
+                        triangle[triangle_edge_count] = vertex_index;
+                        // auto vertex = get_vertex_by_edge(edge, coors, signed_distance);
+                        // vertices.emplace_back(std::move(vertex));
                         triangle_edge_count++;
                         // edges = edges >> 4;
                     }
@@ -876,5 +902,54 @@ TEST(GlobalTest, inside_const_vector_Vector3d_const_Vector3d)
             1.1f, 1.3f, 2.6f
         };
         ASSERT_EQ(false, inside(coors, point));
+    }
+}
+
+TEST(GlobalTest, get_vertex_by_edge_int_int_int_Edge_const_vector_Vector3d_const_vector_double_MC33Cache_int_vector_Vector3d)
+{
+    std::vector<Eigen::Vector3d> vertice;
+    decltype(MC33_CACHE) cache;
+    {
+        int x = 0, y = 0, z = 0;
+        Edge edge = Edge::e9;
+        std::vector<Eigen::Vector3d> coors = {
+            {0, 0, 0},
+            {0, 1, 0},
+            {0, 1, 1},
+            {0, 0, 1},
+            {1, 0, 0},
+            {1, 1, 0},
+            {1, 1, 1},
+            {1, 0, 1},
+        };
+        std::vector<double> signed_distances = {
+            0.165404f, 0.132750f, -0.371329f, -0.489558f,
+            -0.421950f, -0.171548f, 0.292967f, 0.067295f,
+        };
+        auto index = get_vertex_by_edge(z, y, x, edge, coors, signed_distances, cache, vertice);
+        ASSERT_EQ(0, index);
+    }
+    {
+        int x = 0, y = 1, z = 0;
+        Edge edge = Edge::e8;
+        std::vector<Eigen::Vector3d> coors = {
+            {0, 1, 0},
+            {0, 2, 0},
+            {0, 2, 1},
+            {0, 1, 1},
+            {1, 1, 0},
+            {1, 2, 0},
+            {1, 2, 1},
+            {1, 1, 1},
+        };
+        std::vector<double> signed_distances = {
+            0.132750f, -1.0f, 0.0f, -0.371329f,
+            -0.171548f, 0.0f, 0.0f, 0.292967f,
+        };
+        auto index = get_vertex_by_edge(z, y, x, Edge::e8, coors, signed_distances, cache, vertice);
+        ASSERT_EQ(0, index);
+
+        index = get_vertex_by_edge(z, y, x, Edge::e0, coors, signed_distances, cache, vertice);
+        ASSERT_EQ(1, index);
     }
 }

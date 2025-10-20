@@ -105,5 +105,18 @@ def find_center_point_2():
     print(center_point)
 
 
+def check_duplicate_vertex():
+    vertice = set()
+    obj_path = "D:\\PHD\\Projects\\hello_cg\\hello_mc33\\normal_implement\\build\\problematic_bunny.obj"
+    with open(obj_path, "r", encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if line[0] == 'v':
+                if line in vertice:
+                    print("warning! duplicate vertice found!")
+                else:
+                    vertice.add(line)
+
+
 if __name__ == "__main__":
-    find_center_point_2()
+    check_duplicate_vertex()
