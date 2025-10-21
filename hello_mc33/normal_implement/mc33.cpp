@@ -326,7 +326,8 @@ std::vector<unsigned short> get_edgess(const std::vector<double>& signed_distanc
     return triangles;
 }
 
-void write_obj(std::string filename, const std::vector<Eigen::Vector3d>& vertices, const std::vector<Eigen::Vector3i>& triangles)
+template <typename VData, typename Indice>
+void write_obj(std::string filename, const std::vector<VData>& vertices, const std::vector<Indice>& triangles)
 {
 	std::ofstream file(filename);
     if (!file.is_open()) {
@@ -344,7 +345,7 @@ void write_obj(std::string filename, const std::vector<Eigen::Vector3d>& vertice
 	file.close();
 }
 
-void generate_mesh(const int& nx, const int& ny, const int& nz, const Eigen::VectorXd& signed_distances, const std::string& save_path)
+std::tuple<std::vector<Eigen::Vector3d>, std::vector<Eigen::Vector3i>> generate_mesh(const int& nx, const int& ny, const int& nz, const Eigen::VectorXd& signed_distances)
 {
     std::vector<Eigen::Vector3d> vertices;
     std::vector<Eigen::Vector3i> triangles;
@@ -410,14 +411,37 @@ void generate_mesh(const int& nx, const int& ny, const int& nz, const Eigen::Vec
             }
         }
     }
-    write_obj(save_path, vertices, triangles);
+    // write_obj(save_path, vertices, triangles);
+    return std::make_tuple(vertices, triangles);
+}
+
+std::tuple<std::vector<std::vector<double>>, std::vector<std::vector<int>>> generate_mesh(const std::string& sd_path)
+{
+    int nx = 0, ny = 0, nz = 0;
+    auto signed_distances = get_signed_distance(nx, ny, nz, sd_path);
+    auto [vertice, triangles] = generate_mesh(nx, ny, nz, signed_distances);
+    // turn Eigen based data to vector based data
+    std::vector<std::vector<double>> _vertice;
+    std::vector<std::vector<int>> _triangles;
+    for(const auto& vertex: vertice)
+    {
+        std::vector<double> _vertex = {vertex.x(), vertex.y(), vertex.z()};
+        _vertice.emplace_back(_vertex);
+    }
+    for(const auto& triangle: triangles)
+    {
+        std::vector<int> _triangle = {triangle.x(), triangle.y(), triangle.z()};
+        _triangles.emplace_back(_triangle);
+    }
+    return std::make_tuple(_vertice, _triangles);
 }
 
 void generate_mesh(const std::string& sd_path, const std::string save_path)
 {
     int nx = 0, ny = 0, nz = 0;
     auto signed_distances = get_signed_distance(nx, ny, nz, sd_path);
-    generate_mesh(nx, ny, nz, signed_distances, save_path);
+    auto [vertice, triangles] = generate_mesh(nx, ny, nz, signed_distances);
+    write_obj(save_path, vertice, triangles);
 }
 
 TEST(GlobalTest, generate_and_serialize_signed_distances)
@@ -434,6 +458,16 @@ TEST(GlobalTest, deserialize_sf_and_generate_mesh)
     std::string sd_path = "./signed_distances.pb";
     std::string save_path = "./proto_bunny.obj";
     generate_mesh(sd_path, save_path);
+    ASSERT_EQ(true, std::filesystem::exists(save_path));
+    ASSERT_NE(0, std::filesystem::file_size(save_path));
+}
+
+TEST(GlobalTest, generate_mesh_const_string)
+{
+    std::string sd_path = "./signed_distances.pb";
+    std::string save_path = "./proto_bunny.obj";
+    auto [vertice, triangles] = generate_mesh(sd_path);
+    write_obj(save_path, vertice, triangles);
     ASSERT_EQ(true, std::filesystem::exists(save_path));
     ASSERT_NE(0, std::filesystem::file_size(save_path));
 }
