@@ -5,6 +5,15 @@
 #include <boost/functional/hash.hpp>
 #include "charles_mc33_type.h"
 
+class MC33CacheMissing : public std::out_of_range {
+public:
+    explicit MC33CacheMissing(const std::string& what_arg)
+        : std::out_of_range(what_arg) {}
+    
+    explicit MC33CacheMissing(const char* what_arg)
+        : std::out_of_range(what_arg) {}
+};
+
 // key: z, y, x, edge(from 0 ~ 7)
 template <typename T>
 class MC33Cache
@@ -110,6 +119,12 @@ private:
                 // left
                 {0, -1, 0, Edge::e10},
             }
+        },
+        {
+            Edge::ec,
+            {
+                // interpolation, no previous search condition.
+            }
         }
     };
 public:
@@ -141,7 +156,16 @@ T MC33Cache<T>::get(const std::tuple<int, int, int, Edge>& key)
             return this->cache.at(search_box);
         }
     }
-    return this->cache.at(key);
+    // seems visual studio cannot skip this line's exception, and cannot skip user handled exception, so, it's better to use self defined exception
+    // return this->cache.at(key);
+    if(this->cache.contains(key))
+    {
+        return this->cache.at(key);
+    }
+    else
+    {
+        throw MC33CacheMissing("missing key in mc33 cache!");
+    }
 }
 
 template <typename T>

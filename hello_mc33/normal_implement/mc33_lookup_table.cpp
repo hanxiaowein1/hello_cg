@@ -183,7 +183,7 @@ std::unordered_map<
             {
                 // {{Vertex::v0, Vertex::v5}, {Vertex::v1, Vertex::v4}, {Vertex::v2, Vertex::v4}, {Vertex::v1, Vertex::v7}},
                 {{Vertex::v3, Vertex::v6}, {Vertex::v1, Vertex::v4}, {Vertex::v7, Vertex::v1}, {Vertex::v4, Vertex::v2}, {Vertex::v3, Vertex::v5}, {Vertex::v0, Vertex::v6}},
-                {0xCA2, 0xC9A, 0xC49, 0xC64, 0xCB6, 0xC8B, 0xC08}
+                {0xCA2, 0xC9A, 0xC49, 0xC64, 0xCB6, 0xC8B, 0xC08, 0xC20}
             }
         }
     },

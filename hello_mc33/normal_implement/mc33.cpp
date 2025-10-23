@@ -277,10 +277,11 @@ int get_vertex_by_edge(
 {
     try
     {
+        //throw MC33CacheMissing("disable cache for better debugging");
         auto index = cache.get({z, y, x, edge});
         return index;
     }
-    catch(const std::out_of_range& e)
+    catch(const MC33CacheMissing& e)
     {
         Eigen::Vector3d vertex = ::get_vertex_by_edge(edge, coors, signed_distance);
         vertice.emplace_back(vertex);
@@ -448,7 +449,7 @@ TEST(GlobalTest, generate_and_serialize_signed_distances)
 {
     std::string pb_save_path = "./signed_distances.pb";
     std::string obj_path = "D:\\PHD\\Projects\\DevelopApp\\DevelopApp\\model\\Bunny.obj";
-    generate_signed_distance(30, 30, 30, obj_path, pb_save_path);
+    generate_signed_distance(20, 20, 20, obj_path, pb_save_path);
     ASSERT_EQ(true, std::filesystem::exists(pb_save_path));
     ASSERT_NE(0, std::filesystem::file_size(pb_save_path));
 }
@@ -476,9 +477,9 @@ TEST(GlobalTest, IGLBunny)
 {
     init_tables();
 
-    int nx = 30;
-    int ny = 30;
-    int nz = 30;
+    int nx = 20;
+    int ny = 20;
+    int nz = 20;
 
     Eigen::MatrixXd V;
     Eigen::MatrixXi F;
@@ -522,7 +523,7 @@ TEST(GlobalTest, IGLBunny)
     std::vector<Eigen::Vector3d> vertices;
     std::vector<Eigen::Vector3i> triangles;
     int iso_value = 0;
-
+    Eigen::Vector3d target_point = {9.740499999999999f, 17.518866666666668f, 6.116716666666666f};
     for(int k = 0; k < nz - 1; k++)
 	{
 		for(int j = 0; j < ny - 1; j++)
@@ -540,6 +541,10 @@ TEST(GlobalTest, IGLBunny)
                     {static_cast<double>(i + 1), static_cast<double>(j + 1), static_cast<double>(k + 1)},
                     {static_cast<double>(i + 1), static_cast<double>(j), static_cast<double>(k + 1)},
                 };
+                if(inside(coors, target_point))
+                {
+                    std::cout << "got you!" << std::endl;
+                }
 				unsigned int count = k * ny * nx + j * nx + i;
                 std::vector<double> signed_distance{
                     S[k * ny * nx + j * nx + i],
@@ -576,9 +581,16 @@ TEST(GlobalTest, IGLBunny)
                     std::cerr << "Caught std::out_of_range exception: " << e.what() << std::endl;
                     throw e;
                 }
+                std::vector<Eigen::Vector3d> _vertice;
+                auto start_vertex_index = vertices.size();
+                std::vector<Eigen::Vector3i> _triangles;
+
                 for(auto edges: edgess)
                 {
                     Eigen::Vector3i triangle;
+
+                    Eigen::Vector3i _triangle;
+
                     int triangle_edge_count = 0;
                     unsigned short get_edge_factor = 0xF00;
                     while(triangle_edge_count <= 2)
@@ -589,11 +601,19 @@ TEST(GlobalTest, IGLBunny)
                             (4 * (2 - triangle_edge_count))
                         );
                         auto vertex_index = get_vertex_by_edge(k, j, i, edge, coors, signed_distance, MC33_CACHE, vertices);
+
+                        _vertice.emplace_back(vertices[vertex_index]);
+                        
                         triangle[triangle_edge_count] = vertex_index;
+
+                        _triangle[triangle_edge_count] = vertex_index - start_vertex_index;
+
                         triangle_edge_count++;
                     }
-                    triangles.emplace_back(std::move(triangle));
+                    triangles.emplace_back(triangle);
+                    _triangles.emplace_back(_triangle);
                 }
+                std::cout << "for breakpoint" << std::endl;
             }
         }
     }

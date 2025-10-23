@@ -118,5 +118,33 @@ def check_duplicate_vertex():
                     vertice.add(line)
 
 
+def hole_in_mesh():
+    # TODO: input 8 coordinates, and interpolation of marching cubes 33,
+    # then render it with text of coordinates and other information,
+    # and it's better to click a face and display its information
+    """
+    problem detection process: use generated mesh by mc33, but when compute its quadraic metric,
+    there are empty pointer. And then I use charles_mesh::is_manifold, no problem found,
+    use meshlab to check, found a hole. Two problems need to be solved;
+    1) hole in mesh
+    2) is_manifold() function check;
+    """
+    # the vertice is the triangle shaped hole in bunny 20
+    vertice = [
+        [9.66015, 17.5566, 6.35015],
+        [9.81934, 18, 6],
+        [9.74201, 17, 6],
+    ]
+    # compute the center point
+    center_point = [0, 0, 0]
+    for vertex in vertice:
+        center_point[0] = center_point[0] + vertex[0]
+        center_point[1] = center_point[1] + vertex[1]
+        center_point[2] = center_point[2] + vertex[2]
+    for i in range(0, len(center_point)):
+        center_point[i] = center_point[i] / 3
+    print(center_point)
+
+
 if __name__ == "__main__":
-    check_duplicate_vertex()
+    hole_in_mesh()
