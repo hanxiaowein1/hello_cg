@@ -11,6 +11,10 @@ Currently, this project is just for self use, but if you want to compile it loca
 4. modify the CMakeLists.txt, change the CMAKE_TOOLCHAIN_FILE to your installed vcpkg path, change the eigen and libigl path.
 ```
 I'm sure the above-mentioned steps will be sufficient for build the library in your local environment. If you have problems, feel ease to contact us. Email: hanwein2@gmail.com.
+## Usage
+We provide two interfaces in mc33.h, given a signed_distance file, it will generate obj type triangle mesh. For generate signed distance file, we also provide interfaces in signed_distances_iface.h, given a obj type triangle mesh, it will generate signed distance file. We save signed distance file by protobuf, you can check the proto file under the ~/hello_mc33/normal_implement/proto directory.
+
+We also build a **execute binary**, which is integrated in a visualized tool. You can find it [here](https://github.com/hanxiaowein1/charles_mesh/releases/tag/v0.2). In this visualized tool, you can choose a signed distance file, generate mesh and save it in directory.
 ## Core Ideas
 ### Generate all tables
 Use original 33 cases from mc33 paper, then rotate it along the directions x/y/z, so we will rotate it 4 * 4 * 4 times, flip it along the planes xy/xz/yz, and finally invert it signed distance(turn positive into negative, vice versa). After such operations, we are be able to get all marching cubes33 tables.
