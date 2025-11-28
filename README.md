@@ -27,6 +27,7 @@ We also build a **execute binary**, which is integrated in a visualized tool. Yo
 ### Generate all tables
 Use original 33 cases from mc33 paper, then rotate it along the directions x/y/z, so we will rotate it 4 * 4 * 4 times, flip it along the planes xy/xz/yz, and finally invert it signed distance(turn positive into negative, vice versa). After such operations, we are be able to get all marching cubes33 tables.
 ### Cache
+(Notice: This idea is borrowed from another project, but due to my terrible memory, I cannot find the source...)<br>
 Notice that adjacent cubes have shared edges.
 ```text
   Vertices:            Edges:               Faces:
